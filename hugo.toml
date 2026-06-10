@@ -1,10 +1,10 @@
-baseURL = "/"
+baseURL = "https://record.mona.cx"
 languageCode = "zh-cn"
 title = "我的记录间"
 theme = "anubis2"
 
 [pagination]
-  pagerSize = 5
+  pagerSize = 6
 
 [params.author]
   name = "mona"

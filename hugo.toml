@@ -38,3 +38,7 @@ theme = "anubis2"
 
 [markup.highlight]
   style = 'catppuccin-frappe'
+
+[params.anubis2]
+  enablerssicon = false
+  customcss = ["css/custom.css"]

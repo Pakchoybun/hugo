@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+
+  <channel>
+    <title>我的记录间</title>
+    <link>//localhost:1313/</link>
+    <description>Recent blog posts on 我的记录间</description>
+    
+    <generator>Hugo (https://gohugo.io)</generator>
+    
+    <language>zh-cn</language>
+    
+    <managingEditor></managingEditor>
+    
+    <webMaster></webMaster>
+    
+    <lastBuildDate>Wed, 10 Jun 2026 15:55:02 +0800</lastBuildDate>
+    
+    <atom:link href="//localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    
+
+    <item>
+      <title>Hello World</title>
+      <link>//localhost:1313/posts/hello-world/</link>
+      <pubDate>Wed, 10 Jun 2026 15:55:02 +0800</pubDate>
+      
+      <author></author>
+
+      
+      
+      
+      
+
+      <description>
+      这是我的第一篇博客文章！
+# 关于这个网站 这里是我的个人博客，我会在这里记录&amp;amp;hellip;
+
+      </description>
+      <content:encoded>&lt;p&gt;这是我的第一篇博客文章！&lt;/p&gt;
+&lt;h2 id=&#34;关于这个网站&#34; &gt;
+&lt;div&gt;
+    &lt;a href=&#34;#%e5%85%b3%e4%ba%8e%e8%bf%99%e4%b8%aa%e7%bd%91%e7%ab%99&#34;&gt;
+        #
+    &lt;/a&gt;
+    关于这个网站
+&lt;/div&gt;
+&lt;/h2&gt;
+&lt;p&gt;这里是我的个人博客，我会在这里记录&amp;hellip;&lt;/p&gt;
+</content:encoded>
+      
+      <category>第一篇</category>
+      
+      <category>测试</category>
+      
+      
+      <guid isPermaLink="true">//localhost:1313/posts/hello-world/</guid>
+    </item>
+    
+  </channel>
+</rss>

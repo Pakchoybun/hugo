@@ -1,0 +1,40 @@
+baseURL = "/"
+languageCode = "zh-cn"
+title = "我的记录间"
+theme = "anubis2"
+
+[pagination]
+  pagerSize = 5
+
+[params.author]
+  name = "mona"
+
+[[menu.main]]
+  identifier = "home"
+  name = "首页"
+  url = "/"
+  weight = 1
+
+[[menu.main]]
+  identifier = "about"
+  name = "关于"
+  url = "/about/"
+  weight = 2
+
+[[menu.main]]
+  identifier = "tags"
+  name = "标签"
+  url = "/tags/"
+  weight = 3
+
+[[menu.main]]
+  name = "归档"
+  identifier = "archive"
+  url = "/posts/"
+  weight = 4
+
+[markup.goldmark.renderer]
+  unsafe = true
+
+[markup.highlight]
+  style = 'catppuccin-frappe'

@@ -3,7 +3,7 @@
 
   <channel>
     <title>我的记录间</title>
-    <link>//localhost:1313/</link>
+    <link>http://localhost:1313/</link>
     <description>Recent blog posts on 我的记录间</description>
     
     <generator>Hugo (https://gohugo.io)</generator>
@@ -16,12 +16,12 @@
     
     <lastBuildDate>Wed, 10 Jun 2026 15:55:02 +0800</lastBuildDate>
     
-    <atom:link href="//localhost:1313/tags/%E6%B5%8B%E8%AF%95/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/tags/%E6%B5%8B%E8%AF%95/index.xml" rel="self" type="application/rss+xml" />
     
 
     <item>
       <title>Hello World</title>
-      <link>//localhost:1313/posts/hello-world/</link>
+      <link>http://localhost:1313/posts/hello-world/</link>
       <pubDate>Wed, 10 Jun 2026 15:55:02 +0800</pubDate>
       
       <author></author>
@@ -53,7 +53,7 @@
       <category>测试</category>
       
       
-      <guid isPermaLink="true">//localhost:1313/posts/hello-world/</guid>
+      <guid isPermaLink="true">http://localhost:1313/posts/hello-world/</guid>
     </item>
     
   </channel>

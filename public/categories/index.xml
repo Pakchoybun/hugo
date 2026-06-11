@@ -3,7 +3,7 @@
 
   <channel>
     <title>我的记录间</title>
-    <link>//localhost:1313/</link>
+    <link>http://localhost:1313/</link>
     <description>Recent blog posts on 我的记录间</description>
     
     <generator>Hugo (https://gohugo.io)</generator>
@@ -15,7 +15,7 @@
     <webMaster></webMaster>
     
     
-    <atom:link href="//localhost:1313/categories/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/categories/index.xml" rel="self" type="application/rss+xml" />
     
   </channel>
 </rss>

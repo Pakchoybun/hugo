@@ -1,5 +1,5 @@
 baseURL = "https://record.mona.cx"
-languageCode = "zh-cn"
+locale = "zh-cn"
 title = "我的记录间"
 theme = "anubis2"
 

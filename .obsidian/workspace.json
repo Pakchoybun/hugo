@@ -41,7 +41,9 @@
               "type": "file-explorer",
               "state": {
                 "sortOrder": "alphabetical",
-                "autoReveal": false
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
               },
               "icon": "lucide-folder-closed",
               "title": "文件列表"
@@ -181,5 +183,11 @@
     }
   },
   "active": "9872f26a9acdc1f1",
-  "lastOpenFiles": []
+  "lastOpenFiles": [
+    "public/image/Swiss_cheese_model_of_accident_causation.png",
+    "public/images/Swiss_cheese_model_of_accident_causation.png",
+    "content/posts/变更管理.md",
+    "content/posts/手臂振动病的预防.md",
+    "content/posts/根因分析小记.md"
+  ]
 }

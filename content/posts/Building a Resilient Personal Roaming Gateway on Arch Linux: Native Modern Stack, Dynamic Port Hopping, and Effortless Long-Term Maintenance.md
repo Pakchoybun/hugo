@@ -822,9 +822,13 @@ sudo systemctl status mihomo
 
 ## Step 7: Cross-Platform Client Deployment Guide (Desktop & Mobile)
 
-### 7.1 Linux Desktop Deployment (TUN Transparent Mode)
+This setup tailors two separate, fully audited configuration profiles according to the differing network stacks and power-consumption characteristics of desktop and mobile platforms:
+- **Desktop Profile (`mihomo-desktop.yaml`)**: Enables native transparent TUN routing, TCP concurrency, and standard keep-alive timeouts. Because all network traffic is routed through the virtual TUN interface, domestic traffic is cleanly and comprehensively resolved by `GEOSITE,CN` and `GEOIP,CN`.
+- **Mobile Profile (`mihomo-mobile.yaml`)**: **Omits the `tun` section entirely** (leaving virtual interface management to the mobile operating system's native `VpnService` to prevent double-TUN battery drain), enables `quic-go-disable-gso: true` to bypass cellular base station UDP fragmentation flaws, and utilizes short keep-alive heartbeats to prevent idle drops. Furthermore, it incorporates explicit `DOMAIN-SUFFIX` direct routing rules for high-frequency domestic apps (such as Bilibili, WeChat, QQ) to prevent private in-app HTTPDNS implementations from bypassing system DNS and triggering account fraud-prevention flags.
 
-On a Linux client machine:
+### 7.1 Linux Desktop Deployment & Full Configuration (TUN Transparent Mode)
+
+On the client Linux machine, execute the environment initialization:
 
 1. **Setup TUN Permissions (`setup-client.sh`)**:
    ```bash
@@ -834,17 +838,17 @@ On a Linux client machine:
    sudo chown root:mihomo /etc/mihomo && sudo chmod 750 /etc/mihomo
    sudo chown mihomo:mihomo /var/lib/mihomo && sudo chmod 750 /var/lib/mihomo
 
-   # Grant restricted mihomo user access to create TUN devices
+   # Grant restricted mihomo user permissions to operate TUN devices
    sudo tee /etc/udev/rules.d/90-mihomo-tun.rules << 'EOF'
    KERNEL=="tun", GROUP="mihomo", MODE="0660"
    EOF
    sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=tun
    ```
 
-2. **Install mihomo Binary**:
-   Run the same `02-install-mihomo.sh` script as used on the server.
+2. **Install mihomo Core Binary**:
+   Run the same `02-install-mihomo.sh` script as on the server to install the binary to `/usr/local/bin/mihomo`.
 
-3. **Client Systemd Service (Requires CAP_NET_ADMIN for TUN)**:
+3. **Client Systemd Service Unit (Grants CAP_NET_ADMIN for TUN)**:
    Create `/etc/systemd/system/mihomo.service`:
    ```ini
    [Unit]
@@ -873,86 +877,432 @@ On a Linux client machine:
    [Install]
    WantedBy=multi-user.target
    ```
-   Reload: `sudo systemctl daemon-reload`.
+   Reload systemd: `sudo systemctl daemon-reload`.
 
-4. **Desktop Profile (`mihomo-desktop.yaml`)**:
-   ```yaml
-   mixed-port: 7890
-   allow-lan: false
-   bind-address: 127.0.0.1
-   mode: rule
-   log-level: warning
-   ipv6: false
-   unified-delay: true
-   tcp-concurrent: true
-   find-process-mode: off
+4. **Desktop Full Profile (`mihomo-desktop.yaml`)**:
+   Save the following complete configuration to `/etc/mihomo/config.yaml`:
 
-   # Disable ECN to prevent ISP UDP degradation
-   experimental:
-     quic-go-disable-gso: false
-     quic-go-disable-ecn: true
+```yaml
 
-   # DoH hosts resolution
-   hosts:
-     'dns.quad9.net': [9.9.9.9, 149.112.112.112]
-     'protective.joindns4.eu': [86.54.11.1, 86.54.11.201]
+mixed-port: 7890
+allow-lan: false
+bind-address: 127.0.0.1
+mode: rule
+log-level: warning
+ipv6: false
+unified-delay: true
+tcp-concurrent: true
+find-process-mode: off
 
-   tun:
-     enable: true
-     stack: mixed
-     dns-hijack:
-       - "any:53"
-     auto-route: true
-     auto-detect-interface: true
-     strict-route: true
+keep-alive-interval: 30
+keep-alive-idle: 600
+disable-keep-alive: false
 
-   dns:
-     enable: true
-     enhanced-mode: fake-ip
-     fake-ip-range: 198.18.0.1/16
-     fake-ip-filter:
-       - GEOSITE,CN,real-ip
-       - GEOSITE,private,real-ip
-       - DOMAIN,<YOUR_DOMAIN>,real-ip
-       - MATCH,fake-ip
-     nameserver:
-       - https://dns.quad9.net/dns-query
-       - https://protective.joindns4.eu/dns-query
-     proxy-server-nameserver:
-       - https://dns.alidns.com/dns-query
-       - https://doh.pub/dns-query
+geodata-mode: true
+geo-auto-update: true
+geo-update-interval: 24
+geox-url:
+  geoip: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat"
+  geosite: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
+  mmdb: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb"
+  asn: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/GeoLite2-ASN.mmdb"
 
-   proxies:
-     - name: "HY2-Port-Hopping"
-       type: hysteria2
-       server: <YOUR_DOMAIN>
-       ports: <HOP_PORT_START>-<HOP_PORT_END>
-       hop-interval: 30
-       password: "<YOUR_STRONG_PASSWORD>"
-       up: 200
-       down: 100
-       sni: <YOUR_DOMAIN>
-       skip-cert-verify: false
-       alpn:
-         - h3
-       ech-opts:
-         enable: true
-         config: "<YOUR_ECH_CONFIG_BASE64>"
-   ```
+profile:
+  store-selected: true
+  store-fake-ip: true
 
-### 7.2 Windows & macOS Clients
+experimental:
+  quic-go-disable-gso: false
+  quic-go-disable-ecn: true
+  dialer-ip4p-convert: false
 
-Supported graphical GUI clients include **Mihomo Party**, **Clash Verge Rev**, and **Flclash**:
-- Import the YAML configuration with your placeholders filled in.
-- Enable "TUN Mode" or "Service Mode" in the client settings for system-wide routing.
+# Static hosts mapping for DoH endpoints: Bypasses bootstrap queries & prevents DNS poisoning
+hosts:
+  'dns.quad9.net':
+    - 9.9.9.9
+    - 149.112.112.112
+  'protective.joindns4.eu':
+    - 86.54.11.1
+    - 86.54.11.201
 
-### 7.3 Mobile Clients (Android & iOS Power Optimization)
+# ---- TUN Mode ----
+tun:
+  enable: true
+  stack: mixed
+  dns-hijack:
+    - "any:53"
+  auto-route: true
+  auto-detect-interface: true
+  strict-route: true
+  route-exclude-address:
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+    - 127.0.0.0/8
+    - 169.254.0.0/16
+    - 224.0.0.0/4
+    - 240.0.0.0/4
+  mtu: 1500
 
-For mobile devices, battery drain and background disconnections are common challenges. Optimize `mihomo-mobile.yaml` with the following:
-1. **Omit the `tun` configuration block**: The virtual interface is handled directly by the mobile OS via `VpnService`.
-2. **Enable `quic-go-disable-gso: true`**: Mitigates packet drops across cellular carrier base stations.
-3. **Turn off process scanning `find-process-mode: off`**: Saves background CPU cycles.
-4. **Tune keep-alive intervals**: Set `keep-alive-interval: 25` and `keep-alive-idle: 120` to prevent carrier NAT state eviction.
+# ---- DNS ----
+dns:
+  enable: true
+  cache-algorithm: arc
+  prefer-h3: false
+  use-hosts: true
+  use-system-hosts: true
+  respect-rules: true
+  listen: 127.0.0.1:1053
+  ipv6: false
+
+  default-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  fake-ip-filter-mode: rule
+  fake-ip-filter:
+    - GEOSITE,CN,real-ip
+    - GEOSITE,private,real-ip
+    - GEOSITE,apple,real-ip
+    - GEOSITE,onedrive,real-ip
+    - GEOSITE,category-ntp,real-ip
+    - GEOSITE,connectivity-check,real-ip
+    - DOMAIN,<YOUR_DOMAIN>,real-ip
+    - MATCH,fake-ip
+
+  nameserver-policy:
+    "geosite:cn,private,apple,onedrive,microsoft@cn":
+      - https://dns.alidns.com/dns-query
+      - https://doh.pub/dns-query
+    "geosite:google,youtube,telegram,gfw,geolocation-!cn":
+      - https://dns.quad9.net/dns-query
+      - https://protective.joindns4.eu/dns-query
+
+  nameserver:
+    - https://dns.quad9.net/dns-query
+    - https://protective.joindns4.eu/dns-query
+
+  fallback:
+    - https://protective.joindns4.eu/dns-query
+    - https://dns.quad9.net/dns-query
+
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    geosite:
+      - gfw
+    ipcidr:
+      - 240.0.0.0/4
+      - 0.0.0.0/32
+      - 127.0.0.1/32
+      - 100.64.0.0/10
+
+  # Node domain resolution: Domestic DoH (encrypted transport against inspection)
+  proxy-server-nameserver:
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
+
+  direct-nameserver:
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
+  direct-nameserver-follow-policy: false
+
+# ---- Proxy Node ----
+proxies:
+  - name: HY2-Port-Hopping
+    type: hysteria2
+    server: <YOUR_DOMAIN>
+    ports: <HOP_PORT_START>-<HOP_PORT_END>
+    hop-interval: 30
+    password: "<YOUR_STRONG_PASSWORD>"
+    up: 200
+    down: 100
+    sni: <YOUR_DOMAIN>
+    skip-cert-verify: false
+    alpn:
+      - h3
+    ech-opts:
+      enable: true
+      config: "<YOUR_ECH_CONFIG_BASE64>"
+
+# ---- Proxy Groups ----
+proxy-groups:
+  - name: 代理
+    type: select
+    proxies:
+      - 自动选择
+      - HY2-Port-Hopping
+      - DIRECT
+  - name: 自动选择
+    type: url-test
+    proxies:
+      - HY2-Port-Hopping
+    url: https://www.gstatic.com/generate_204
+    interval: 300
+    tolerance: 50
+
+
+rules:
+  # Ad blocking
+  - GEOSITE,category-ads-all,REJECT
+
+  # Direct connection to node domain (prevents loops)
+  - DOMAIN,<YOUR_DOMAIN>,DIRECT
+
+
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+  - GEOIP,private,DIRECT,no-resolve
+  - GEOSITE,private,DIRECT
+
+
+  - GEOSITE,google,代理
+  - GEOSITE,youtube,代理
+  - GEOSITE,telegram,代理
+  - GEOSITE,github,代理
+  - GEOSITE,openai,代理
+  - GEOSITE,anthropic,代理
+  - IP-CIDR,160.79.104.0/21,代理,no-resolve
+  - GEOIP,telegram,代理
+
+
+  - GEOSITE,microsoft@cn,DIRECT
+  - GEOSITE,apple-cn,DIRECT
+  - GEOSITE,steam@cn,DIRECT
+  - GEOSITE,category-games@cn,DIRECT
+
+ 
+  - GEOSITE,CN,DIRECT
+  - GEOIP,CN,DIRECT
+
+
+  - GEOSITE,geolocation-!cn,代理
+
+
+  - MATCH,代理
+```
+
+Enable and verify:
+```bash
+sudo chown root:mihomo /etc/mihomo/config.yaml
+sudo chmod 640 /etc/mihomo/config.yaml
+sudo systemctl enable --now mihomo
+sudo systemctl status mihomo
+```
+
+---
+
+### 7.2 Mobile Full Profile (`mihomo-mobile.yaml` / Android & iOS Power-Optimized)
+
+For mobile clients (Clash Meta for Android, Flclash, Sing-box, Loon, Shadowrocket, etc.), save or import the following complete configuration:
+
+```yaml
+mixed-port: 7890
+allow-lan: false
+bind-address: 127.0.0.1
+mode: rule
+log-level: warning
+ipv6: false
+unified-delay: true
+tcp-concurrent: false
+find-process-mode: off
+
+# Mobile-specific keep-alive: Prevents carrier mobile base stations from evicting NAT states
+keep-alive-interval: 25
+keep-alive-idle: 120
+disable-keep-alive: false
+
+geodata-mode: true
+geo-auto-update: true
+geo-update-interval: 24
+geox-url:
+  geoip: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat"
+  geosite: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
+  mmdb: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb"
+  asn: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/GeoLite2-ASN.mmdb"
+
+profile:
+  store-selected: true
+  store-fake-ip: true
+
+experimental:
+  # Disabling GSO and ECN is strongly advised on cellular mobile networks
+  quic-go-disable-gso: true
+  quic-go-disable-ecn: true
+  dialer-ip4p-convert: false
+
+# Static hosts mapping for DoH endpoints: Bypasses bootstrap queries & prevents DNS poisoning
+hosts:
+  'dns.quad9.net':
+    - 9.9.9.9
+    - 149.112.112.112
+  'protective.joindns4.eu':
+    - 86.54.11.1
+    - 86.54.11.201
+
+# Note: Mobile configurations omit the 'tun:' block entirely.
+# The virtual network interface is delegated to the mobile OS VpnService.
+
+# ---- DNS ----
+dns:
+  enable: true
+  cache-algorithm: arc
+  prefer-h3: false
+  use-hosts: true
+  use-system-hosts: true
+  respect-rules: true
+  listen: 127.0.0.1:1053
+  ipv6: false
+
+  default-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  fake-ip-filter-mode: rule
+  fake-ip-filter:
+    - GEOSITE,CN,real-ip
+    - GEOSITE,private,real-ip
+    - GEOSITE,apple,real-ip
+    - GEOSITE,onedrive,real-ip
+    - GEOSITE,category-ntp,real-ip
+    - GEOSITE,connectivity-check,real-ip
+    - DOMAIN,<YOUR_DOMAIN>,real-ip
+    - MATCH,fake-ip
+
+  nameserver-policy:
+    "geosite:cn,private,apple,onedrive,microsoft@cn":
+      - https://dns.alidns.com/dns-query
+      - https://doh.pub/dns-query
+    "geosite:google,youtube,telegram,gfw,geolocation-!cn":
+      - https://dns.quad9.net/dns-query
+      - https://protective.joindns4.eu/dns-query
+
+  nameserver:
+    - https://dns.quad9.net/dns-query
+    - https://protective.joindns4.eu/dns-query
+
+  fallback:
+    - https://protective.joindns4.eu/dns-query
+    - https://dns.quad9.net/dns-query
+
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    geosite:
+      - gfw
+    ipcidr:
+      - 240.0.0.0/4
+      - 0.0.0.0/32
+      - 127.0.0.1/32
+      - 100.64.0.0/10
+
+  proxy-server-nameserver:
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
+
+  direct-nameserver:
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
+  direct-nameserver-follow-policy: false
+
+# ---- Proxy Node ----
+proxies:
+  - name: HY2-Port-Hopping
+    type: hysteria2
+    server: <YOUR_DOMAIN>
+    ports: <HOP_PORT_START>-<HOP_PORT_END>
+    hop-interval: 30
+    password: "<YOUR_STRONG_PASSWORD>"
+    up: 100
+    down: 100
+    sni: <YOUR_DOMAIN>
+    skip-cert-verify: false
+    alpn:
+      - h3
+    ech-opts:
+      enable: true
+      config: "<YOUR_ECH_CONFIG_BASE64>"
+
+# ---- Proxy Groups ----
+proxy-groups:
+  - name: 代理
+    type: select
+    proxies:
+      - 自动选择
+      - HY2-Port-Hopping
+      - DIRECT
+  - name: 自动选择
+    type: url-test
+    proxies:
+      - HY2-Port-Hopping
+    url: https://www.gstatic.com/generate_204
+    interval: 300
+    tolerance: 50
+
+rules:
+  # Ad blocking
+  - GEOSITE,category-ads-all,REJECT
+
+  # Direct connection to node domain (prevents loops)
+  - DOMAIN,<YOUR_DOMAIN>,DIRECT
+
+
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+  - GEOIP,private,DIRECT,no-resolve
+  - GEOSITE,private,DIRECT
+
+ 
+  - GEOSITE,google,代理
+  - GEOSITE,youtube,代理
+  - GEOSITE,telegram,代理
+  - GEOSITE,github,代理
+  - GEOSITE,openai,代理
+  - GEOSITE,anthropic,代理
+  - IP-CIDR,160.79.104.0/21,代理,no-resolve
+  - GEOIP,telegram,代理
+
+
+  - GEOSITE,microsoft@cn,DIRECT
+  - GEOSITE,apple-cn,DIRECT
+  - GEOSITE,steam@cn,DIRECT
+  - GEOSITE,category-games@cn,DIRECT
+
+
+  - GEOSITE,bilibili,DIRECT
+  - DOMAIN-SUFFIX,bilibili.com,DIRECT
+  - DOMAIN-SUFFIX,biliapi.net,DIRECT
+  - DOMAIN-SUFFIX,hdslb.com,DIRECT
+  - DOMAIN-SUFFIX,bilivideo.com,DIRECT
+  - DOMAIN-SUFFIX,bilivideo.cn,DIRECT
+  - DOMAIN-SUFFIX,acgvideo.com,DIRECT
+  - DOMAIN-SUFFIX,qq.com,DIRECT
+  - DOMAIN-SUFFIX,gtimg.cn,DIRECT
+  - DOMAIN-SUFFIX,weixin.qq.com,DIRECT
+
+
+  - GEOSITE,CN,DIRECT
+  - GEOIP,CN,DIRECT
+
+
+  - GEOSITE,geolocation-!cn,代理
+
+
+  - MATCH,代理
+```
+
+---
+
+### 7.3 Windows / macOS GUI Client Setup
+
+On Windows or macOS, graphical clients like **Mihomo Party**, **Clash Verge Rev**, or **Flclash** are recommended:
+1. Create a new local profile, copy and paste the complete content of `mihomo-desktop.yaml` above into it;
+2. Verify that `<YOUR_DOMAIN>`, `<HOP_PORT_START>-<HOP_PORT_END>`, `<YOUR_STRONG_PASSWORD>`, and `<YOUR_ECH_CONFIG_BASE64>` are appropriately filled in;
+3. Save and activate the profile, then toggle "System Proxy" or "TUN Mode / Service Mode" on the dashboard for system-wide routing.
 
 ---
 

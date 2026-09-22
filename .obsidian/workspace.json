@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "content/posts/根因分析小记.md",
-                "mode": "source",
+                "file": "content/posts/Building a Resilient Personal Roaming Gateway on Arch Linux: Native Modern Stack, Dynamic Port Hopping, and Effortless Long-Term Maintenance.md",
+                "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "根因分析小记"
+              "title": "Building a Resilient Personal Roaming Gateway on Arch Linux: Native Modern Stack, Dynamic Port Hopping, and Effortless Long-Term Maintenance"
             }
           }
         ]
@@ -184,10 +184,13 @@
   },
   "active": "9872f26a9acdc1f1",
   "lastOpenFiles": [
-    "public/image/Swiss_cheese_model_of_accident_causation.png",
-    "public/images/Swiss_cheese_model_of_accident_causation.png",
-    "content/posts/变更管理.md",
     "content/posts/手臂振动病的预防.md",
-    "content/posts/根因分析小记.md"
+    "content/posts/Building a Resilient Personal Roaming Gateway on Arch Linux: Native Modern Stack, Dynamic Port Hopping, and Effortless Long-Term Maintenance.md",
+    "content/posts/根因分析小记.md",
+    "content/posts/FreeBSD tutorial on bypassing the Great Firewall.md",
+    "content/posts/变更管理.md",
+    "未命名.md",
+    "public/image/Swiss_cheese_model_of_accident_causation.png",
+    "public/images/Swiss_cheese_model_of_accident_causation.png"
   ]
 }

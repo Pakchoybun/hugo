@@ -3,7 +3,7 @@
 
   <channel>
     <title>我的记录间</title>
-    <link>http://localhost:1313/</link>
+    <link>https://record.mona.cx/</link>
     <description>Recent blog posts on 我的记录间</description>
     
     <generator>Hugo (https://gohugo.io)</generator>
@@ -16,12 +16,12 @@
     
     <lastBuildDate>Sun, 11 Feb 2024 11:09:20 +0800</lastBuildDate>
     
-    <atom:link href="http://localhost:1313/tags/ehs/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://record.mona.cx/tags/ehs/index.xml" rel="self" type="application/rss+xml" />
     
 
     <item>
       <title>根因分析小记</title>
-      <link>http://localhost:1313/posts/%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90%E5%B0%8F%E8%AE%B0/</link>
+      <link>https://record.mona.cx/posts/%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90%E5%B0%8F%E8%AE%B0/</link>
       <pubDate>Sun, 11 Feb 2024 11:09:20 +0800</pubDate>
       
       <author></author>
@@ -65,7 +65,7 @@
 &lt;p&gt;结果就是：同样的事故，即便换一个员工，在一段时间后依然会重复发生。&lt;/p&gt;
 &lt;p&gt;接下来，文章将使用瑞士奶酪模型（Swiss Cheese Model），并结合OSHA的屏障防御思维，通过这起典型的反应釜清洗灼伤事故，演示如何从“追究个人责任”升级为“发现系统漏洞”，完成一次深入的根因分析（RCA）。&lt;/p&gt;
 &lt;p&gt;瑞士奶酪模型：该模型将复杂系统中的防护层比喻为多片重叠的瑞士奶酪。每片奶酪上的孔洞代表系统中潜在的弱点或失误。只有当所有防护层的孔洞偶然对齐时，危害才能穿越所有层级导致事故——即事故的发生需要多个因素同时出现，而非单一原因。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;http://localhost:1313/images/Swiss_cheese_model_of_accident_causation.png&#34; alt=&#34;瑞士奶酪模型&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://record.mona.cx/images/Swiss_cheese_model_of_accident_causation.png&#34; alt=&#34;瑞士奶酪模型&#34;&gt;&lt;/p&gt;
 &lt;div style=&#34;display: flex; justify-content: center&#34;&gt;
 &lt;table&gt;
 	&lt;thead&gt;
@@ -256,7 +256,7 @@
       <category>EHS</category>
       
       
-      <guid isPermaLink="true">http://localhost:1313/posts/%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90%E5%B0%8F%E8%AE%B0/</guid>
+      <guid isPermaLink="true">https://record.mona.cx/posts/%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90%E5%B0%8F%E8%AE%B0/</guid>
     </item>
     
   </channel>

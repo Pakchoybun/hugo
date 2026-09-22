@@ -1,0 +1,2166 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+<html lang="zh-cn" data-theme="">
+<head>
+    
+        
+<meta charset="utf-8">
+<meta name="HandheldFriendly" content="True">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer-when-downgrade">
+<meta name="theme-name" content="Anubis2">
+<meta name="theme-version" content="1.8.0">
+
+
+    <title>Building a Resilient Personal Roaming Gateway on Arch Linux: Native Modern Stack, Dynamic Port Hopping, and Effortless Long-Term Maintenance - 我的记录间</title>
+
+
+
+  <meta name="description" content="
+Abstract: When setting up a reliable and performant personal roaming gateway, simplicity, long-term stability, and low maintenance overhead are the top priorities. This guide documents an end-to-end deployment on Arch Linux using the native mihomo core (a clean, native architecture utilizing listeners.hysteria2 and proxies.hysteria2), the Hysteria2 (QUIC) protocol, ECH (Encrypted Client Hello) SNI obfuscation, nftables dynamic port hopping, and a lighttpd static site fallback.
+
+
+
+
+    
+        #
+    
+    Why Choose Arch Linux?
+
+
+When provisioning a VPS for network relays, many people default to Debian or Ubuntu. However, point-release distributions face major version upgrades every few years (such as jumping from Debian 11 to 12, or Ubuntu 20.04 to 22.04 and 24.04). Inevitably, distribution upgrades come with package dependency conflicts, configuration syntax changes, or even network interface breakage—often forcing administrators to back up and reinstall from scratch.">
+  <meta name="author" content="map[name:mona]">
+  <meta name="copyright" content="map[name:mona]">
+  <meta name="generator" content="Hugo 0.165.0">
+  <link rel="canonical" href="https://record.mona.cx/posts/building-a-resilient-personal-roaming-gateway-on-arch-linux-native-modern-stack-dynamic-port-hopping-and-effortless-long-term-maintenance/">
+  
+  
+  
+
+
+<link rel="icon" type="image/x-icon" href="https://record.mona.cx/favicon.ico">
+<link rel="apple-touch-icon-precomposed" href="https://record.mona.cx/apple-touch-icon.png">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+  
+  
+  
+  
+  
+    
+    
+    
+    
+  
+
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","item":"https://record.mona.cx/","name":"我的记录间","position":1},{"@type":"ListItem","item":"https://record.mona.cx/posts/","name":"Posts","position":2},{"@type":"ListItem","item":"https://record.mona.cx/posts/building-a-resilient-personal-roaming-gateway-on-arch-linux-native-modern-stack-dynamic-port-hopping-and-effortless-long-term-maintenance/","name":"Building a Resilient Personal Roaming Gateway on Arch Linux: Native Modern Stack, Dynamic Port Hopping, and Effortless Long-Term Maintenance","position":3}]},{"@id":"https://record.mona.cx/posts/building-a-resilient-personal-roaming-gateway-on-arch-linux-native-modern-stack-dynamic-port-hopping-and-effortless-long-term-maintenance/#article","@type":"BlogPosting","author":{"@id":"https://record.mona.cx/#person"},"dateModified":"2026-06-17T20:17:02+08:00","datePublished":"2026-06-17T20:17:02+08:00","description":"\u003cblockquote\u003e\n\u003cp\u003e\u003cstrong\u003eAbstract\u003c/strong\u003e: When setting up a reliable and performant personal roaming gateway, simplicity, long-term stability, and low maintenance overhead are the top priorities. This guide documents an end-to-end deployment on \u003cstrong\u003eArch Linux\u003c/strong\u003e using the native \u003cstrong\u003emihomo\u003c/strong\u003e core (a clean, native architecture utilizing \u003ccode\u003elisteners.hysteria2\u003c/code\u003e and \u003ccode\u003eproxies.hysteria2\u003c/code\u003e), the \u003cstrong\u003eHysteria2 (QUIC)\u003c/strong\u003e protocol, \u003cstrong\u003eECH (Encrypted Client Hello)\u003c/strong\u003e SNI obfuscation, \u003cstrong\u003enftables dynamic port hopping\u003c/strong\u003e, and a \u003cstrong\u003elighttpd static site fallback\u003c/strong\u003e.\u003c/p\u003e\n\u003c/blockquote\u003e\n\u003chr\u003e\n\u003ch2 id=\"why-choose-arch-linux\" \u003e\n\u003cdiv\u003e\n    \u003ca href=\"#why-choose-arch-linux\"\u003e\n        #\n    \u003c/a\u003e\n    Why Choose Arch Linux?\n\u003c/div\u003e\n\u003c/h2\u003e\n\u003cp\u003eWhen provisioning a VPS for network relays, many people default to Debian or Ubuntu. However, point-release distributions face major version upgrades every few years (such as jumping from Debian 11 to 12, or Ubuntu 20.04 to 22.04 and 24.04). Inevitably, distribution upgrades come with package dependency conflicts, configuration syntax changes, or even network interface breakage—often forcing administrators to back up and reinstall from scratch.\u003c/p\u003e","headline":"Building a Resilient Personal Roaming Gateway on Arch Linux: Native Modern Stack, Dynamic Port Hopping, and Effortless Long-Term Maintenance","inLanguage":"en","mainEntityOfPage":"https://record.mona.cx/posts/building-a-resilient-personal-roaming-gateway-on-arch-linux-native-modern-stack-dynamic-port-hopping-and-effortless-long-term-maintenance/","publisher":{"@id":"https://record.mona.cx/#person"}},{"@id":"https://record.mona.cx/#person","@type":"Person","name":"mona","url":"https://record.mona.cx/"}]}</script>
+
+
+
+
+
+
+
+<script>
+  (function () {
+    var STORAGE_KEY = 'user-color-scheme';
+    var defaultTheme = "light";
+    var theme;
+    try { theme = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+    if (!theme) {
+      theme = (defaultTheme && defaultTheme !== 'auto')
+        ? defaultTheme
+        : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    }
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+</script>
+
+
+
+
+    
+
+
+
+
+
+    
+    
+        
+    
+    
+
+    
+        <link rel="stylesheet" href="/css/style.min.df7aa67d275c740abf28394e7cc73f6be9dd6ac2c679c519db76b183cdd0c99a.css" integrity="sha256-33qmfSdcdAq/KDlOfMc/a&#43;ndasLGecUZ23axg83QyZo=">
+    
+
+
+
+
+
+    
+
+
+
+
+
+    
+    
+        
+    
+    
+
+    
+        <link rel="stylesheet" href="/css/style.min.36237d613e2f5010b19cb88e7d856f3dc9dac9756ac478a7d22e91f314e6c510.css" integrity="sha256-NiN9YT4vUBCxnLiOfYVvPcnayXVqxHin0i6R8xTmxRA=">
+    
+
+
+
+
+
+    
+
+
+
+
+
+    
+    
+        
+    
+    
+
+    
+        <link rel="stylesheet" href="/css/style.min.61294ff271d5e5c5f4702643f2c1c8b4917fe0a4638dcc5f1611fa695d14e916.css" integrity="sha256-YSlP8nHV5cX0cCZD8sHItJF/4KRjjcxfFhH6aV0U6RY=">
+    
+
+
+
+
+
+    
+
+
+
+
+
+    
+    
+        
+    
+    
+
+    
+        <link rel="stylesheet" href="/css/style.min.bb11e1ce33a7a4002fcfa8333849032b0e25f0f46658eb52c8347156fbbbe39f.css" integrity="sha256-uxHhzjOnpAAvz6gzOEkDKw4l8PRmWOtSyDRxVvu7458=">
+    
+
+
+
+
+
+    
+
+
+
+
+
+    
+    
+        
+    
+    
+
+    
+        <link rel="stylesheet" href="/css/style.min.5e912c44779593b31e6b6cfe458754fe87704de3fea46150d3fdb0199a6064b0.css" integrity="sha256-XpEsRHeVk7Mea2z&#43;RYdU/odwTeP&#43;pGFQ0/2wGZpgZLA=">
+    
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+
+    
+    
+    
+      
+    
+
+    
+    
+    
+    
+      <link rel="stylesheet" href="/css/custom.min.d572c386d3c97f40f19253b92f35e3b34a4cd28b452c93593e57b5ab69eebd7f.css" integrity="sha256-1XLDhtPJf0DxklO5LzXjs0pM0otFLJNZPle1q2nuvX8=" crossorigin="anonymous">
+    
+    
+
+
+
+
+
+
+
+
+    
+
+    
+
+
+
+
+
+    
+    
+        
+    
+    
+
+    
+        <script src="/js/script.min.9752b2b06a7b85657fe0806a9d93413916c87001ca8a2885edc4328662fd7a85.js" type="text/javascript" charset="utf-8" integrity="sha256-l1KysGp7hWV/4IBqnZNBORbIcAHKiiiF7cQyhmL9eoU=" defer></script>
+    
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+    
+</head>
+<body>
+    <a class="skip-main" href="#main">跳至内容</a>
+    <div class="container">
+        <header class="common-header">
+            
+                <div class="header-top">
+    <div class="header-top-left">
+        
+
+<p class="site-title noselect">
+    <a href="/">我的记录间</a>
+</p>
+
+
+        
+
+
+    <script>
+        const STORAGE_KEY = 'user-color-scheme'
+        const defaultTheme = "light"
+
+        let currentTheme
+        let switchButton
+        let autoDefinedScheme = window.matchMedia('(prefers-color-scheme: dark)')
+
+        function switchTheme(e) {
+            currentTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+            if (localStorage) localStorage.setItem(STORAGE_KEY, currentTheme);
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            changeGiscusTheme(currentTheme);
+            document.body.dispatchEvent(new CustomEvent(currentTheme + "-theme-set"));
+        }
+
+        const autoChangeScheme = e => {
+            currentTheme = e.matches ? 'dark' : 'light'
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            changeGiscusTheme(currentTheme);
+            document.body.dispatchEvent(new CustomEvent(currentTheme + "-theme-set"));
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            switchButton = document.querySelector('#theme-toggle')
+            currentTheme = detectCurrentScheme()
+
+            if (currentTheme === 'auto') {
+                autoChangeScheme(autoDefinedScheme);
+                if (typeof autoDefinedScheme.addEventListener === 'function') {
+                  autoDefinedScheme.addEventListener('change', autoChangeScheme);
+                } else if (typeof autoDefinedScheme.addListener === 'function') { 
+                  autoDefinedScheme.addListener(autoChangeScheme);
+                }
+            } else {
+                document.documentElement.setAttribute('data-theme', currentTheme)
+            }
+
+            if (switchButton) {
+                switchButton.addEventListener('click', switchTheme, false)
+            }
+
+            showContent();
+        })
+
+        function detectCurrentScheme() {
+            if (localStorage !== null && localStorage.getItem(STORAGE_KEY)) {
+                return localStorage.getItem(STORAGE_KEY)
+            }
+            if (defaultTheme) {
+                return defaultTheme
+            }
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        function showContent() {
+            document.body.style.visibility = 'visible';
+            document.body.style.opacity = 1;
+        }
+
+        function changeGiscusTheme (theme) {
+            function sendMessage(message) {
+              const iframe = document.querySelector('iframe.giscus-frame');
+              if (!iframe) return;
+              iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+            }
+
+            sendMessage({
+              setConfig: {
+                theme: theme
+              }
+            });
+        }
+    </script>
+
+
+        
+<ul class="social-icons noselect">
+
+    
+        <li>
+            <button id="theme-toggle" type="button" aria-label="切换主题">
+            <span class="inline-svg">
+
+    
+
+
+    
+    
+    
+    
+    
+
+    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-sun-high"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14.828 14.828a4 4 0 1 0 -5.656 -5.656a4 4 0 0 0 5.656 5.656z" /><path d="M6.343 17.657l-1.414 1.414" /><path d="M6.343 6.343l-1.414 -1.414" /><path d="M17.657 6.343l1.414 -1.414" /><path d="M17.657 17.657l1.414 1.414" /><path d="M4 12h-2" /><path d="M12 4v-2" /><path d="M20 12h2" /><path d="M12 20v2" /></svg>
+
+
+</span>
+
+            </button>
+        </li>
+    
+
+
+
+
+
+
+
+</ul>
+
+    </div>
+    <div class="header-top-right">
+
+    </div>
+</div>
+
+
+    <nav class="noselect">
+        
+        
+        <a class="" href="https://record.mona.cx/" title="">首页</a>
+        
+        <a class="" href="https://record.mona.cx/tags/" title="">标签</a>
+        
+        <a class="" href="https://record.mona.cx/posts/" title="">归档</a>
+        
+    </nav>
+
+
+
+
+
+
+            
+        </header>
+        <main id="main" tabindex="-1">
+            
+    
+        <article class="post h-entry">
+            <div class="post-header">
+                <div class="post-title-row">
+                <header>
+                    
+                    
+                    
+                    <h1 class="p-name post-title ">Building a Resilient Personal Roaming Gateway on Arch Linux: Native Modern Stack, Dynamic Port Hopping, and Effortless Long-Term Maintenance</h1>
+                    
+
+                </header>
+                
+                </div>
+                
+
+
+
+<div class="post-info noselect">
+    
+        <div class="post-date dt-published">
+            <time datetime="2026-06-17">2026-06-17</time>
+            
+        </div>
+    
+
+    <a class="post-hidden-url u-url" href="/posts/building-a-resilient-personal-roaming-gateway-on-arch-linux-native-modern-stack-dynamic-port-hopping-and-effortless-long-term-maintenance/">/posts/building-a-resilient-personal-roaming-gateway-on-arch-linux-native-modern-stack-dynamic-port-hopping-and-effortless-long-term-maintenance/</a>
+    <a href="https://record.mona.cx/" class="p-name p-author post-hidden-author h-card" rel="me">map[name:mona]</a>
+
+
+    <div class="post-taxonomies">
+        
+        
+            <ul class="post-tags">
+                
+                    
+                    <li><a href="/tags/others">#Others</a></li>
+                
+            </ul>
+        
+        
+    </div>
+</div>
+
+            </div>
+            
+
+
+
+
+
+  
+  
+  
+  <details class="toc noselect">
+    <summary>Table of Contents</summary>
+    <div class="inner"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#why-choose-arch-linux">Why Choose Arch Linux?</a></li>
+    <li><a href="#table-of-contents">Table of Contents</a></li>
+    <li><a href="#1-architecture--traffic-model">1. Architecture &amp; Traffic Model</a>
+      <ul>
+        <li><a href="#11-traffic-flow-diagram">1.1 Traffic Flow Diagram</a></li>
+        <li><a href="#12-core-architectural-advantages">1.2 Core Architectural Advantages</a></li>
+      </ul>
+    </li>
+    <li><a href="#2-prerequisites--global-placeholder-reference">2. Prerequisites &amp; Global Placeholder Reference</a></li>
+    <li><a href="#step-0-initializing-a-non-root-admin-user">Step 0: Initializing a Non-Root Admin User</a></li>
+    <li><a href="#step-1-ssh-hardening-custom-port--public-key-authentication">Step 1: SSH Hardening (Custom Port &amp; Public Key Authentication)</a></li>
+    <li><a href="#step-2-system-hardening--environment-initialization-01-setup-systemsh">Step 2: System Hardening &amp; Environment Initialization (<code>01-setup-system.sh</code>)</a>
+      <ul>
+        <li><a href="#21-script-implementation">2.1 Script Implementation</a></li>
+        <li><a href="#22-execution">2.2 Execution</a></li>
+      </ul>
+    </li>
+    <li><a href="#step-3-nftables-advanced-firewall-configuration-port-hopping--scan-trap">Step 3: nftables Advanced Firewall Configuration (Port Hopping &amp; Scan Trap)</a></li>
+    <li><a href="#step-4-automated-lets-encrypt-certificate-issuance--lighttpd-deployment">Step 4: Automated Let&rsquo;s Encrypt Certificate Issuance &amp; lighttpd Deployment</a>
+      <ul>
+        <li><a href="#41-cloudflare-dns-api-token-configuration">4.1 Cloudflare DNS API Token Configuration</a></li>
+        <li><a href="#42-deploy-hook-for-automatic-permissions--service-reload">4.2 Deploy Hook for Automatic Permissions &amp; Service Reload</a></li>
+        <li><a href="#43-initial-certificate-issuance">4.3 Initial Certificate Issuance</a></li>
+        <li><a href="#44-configuring-lighttpd-fallback-site">4.4 Configuring lighttpd Fallback Site</a></li>
+      </ul>
+    </li>
+    <li><a href="#step-5-installing-the-mihomo-core-binary-02-install-mihomosh">Step 5: Installing the mihomo Core Binary (<code>02-install-mihomo.sh</code>)</a></li>
+    <li><a href="#step-6-generating-ech-keypair--launching-the-server-daemon">Step 6: Generating ECH Keypair &amp; Launching the Server Daemon</a>
+      <ul>
+        <li><a href="#61-generating-ech-keypair">6.1 Generating ECH Keypair</a></li>
+        <li><a href="#62-hardened-systemd-service-unit">6.2 Hardened Systemd Service Unit</a></li>
+        <li><a href="#63-server-configuration-etcmihomoconfigyaml">6.3 Server Configuration <code>/etc/mihomo/config.yaml</code></a></li>
+      </ul>
+    </li>
+    <li><a href="#step-7-cross-platform-client-deployment-guide-desktop--mobile">Step 7: Cross-Platform Client Deployment Guide (Desktop &amp; Mobile)</a>
+      <ul>
+        <li><a href="#71-linux-desktop-deployment--full-configuration-tun-transparent-mode">7.1 Linux Desktop Deployment &amp; Full Configuration (TUN Transparent Mode)</a></li>
+        <li><a href="#72-mobile-full-profile-mihomo-mobileyaml--android--ios-power-optimized">7.2 Mobile Full Profile (<code>mihomo-mobile.yaml</code> / Android &amp; iOS Power-Optimized)</a></li>
+        <li><a href="#73-windows--macos-gui-client-setup">7.3 Windows / macOS GUI Client Setup</a></li>
+      </ul>
+    </li>
+    <li><a href="#step-8-verification--troubleshooting">Step 8: Verification &amp; Troubleshooting</a>
+      <ul>
+        <li><a href="#81-diagnostic-commands">8.1 Diagnostic Commands</a></li>
+        <li><a href="#82-common-issues--resolutions">8.2 Common Issues &amp; Resolutions</a></li>
+      </ul>
+    </li>
+    <li><a href="#step-9-seamless-hot-upgrades-upgrade-mihomosh">Step 9: Seamless Hot Upgrades (<code>upgrade-mihomo.sh</code>)</a></li>
+    <li><a href="#conclusion">Conclusion</a></li>
+  </ul>
+</nav></div>
+  </details>
+  
+
+
+
+<script>
+  var toc = document.querySelector(".toc");
+  if (toc) {
+    toc.addEventListener("click", function () {
+      if (event.target.tagName !== "A") {
+        event.preventDefault();
+        if (this.open) {
+          this.open = false;
+          this.classList.remove("expanded");
+        } else {
+          this.open = true;
+          this.classList.add("expanded");
+        }
+      }
+    });
+  }
+</script>
+
+            <div class="content e-content">
+                <blockquote>
+<p><strong>Abstract</strong>: When setting up a reliable and performant personal roaming gateway, simplicity, long-term stability, and low maintenance overhead are the top priorities. This guide documents an end-to-end deployment on <strong>Arch Linux</strong> using the native <strong>mihomo</strong> core (a clean, native architecture utilizing <code>listeners.hysteria2</code> and <code>proxies.hysteria2</code>), the <strong>Hysteria2 (QUIC)</strong> protocol, <strong>ECH (Encrypted Client Hello)</strong> SNI obfuscation, <strong>nftables dynamic port hopping</strong>, and a <strong>lighttpd static site fallback</strong>.</p>
+</blockquote>
+<hr>
+<h2 id="why-choose-arch-linux" >
+<div>
+    <a href="#why-choose-arch-linux">
+        #
+    </a>
+    Why Choose Arch Linux?
+</div>
+</h2>
+<p>When provisioning a VPS for network relays, many people default to Debian or Ubuntu. However, point-release distributions face major version upgrades every few years (such as jumping from Debian 11 to 12, or Ubuntu 20.04 to 22.04 and 24.04). Inevitably, distribution upgrades come with package dependency conflicts, configuration syntax changes, or even network interface breakage—often forcing administrators to back up and reinstall from scratch.</p>
+<p>Arch Linux adopts a rolling-release model, <strong>completely eliminating the headache of major version upgrades</strong>. Once set up, you only need to spend two minutes a month logging in via SSH to run <code>sudo pacman -Syu</code>. The entire system, underlying kernel, and toolchains stay continuously up-to-date and in sync with upstream. As long as your VPS remains powered on, this gateway will run quietly and reliably for years without ever needing a teardown or reinstallation.</p>
+<hr>
+<h2 id="table-of-contents" >
+<div>
+    <a href="#table-of-contents">
+        #
+    </a>
+    Table of Contents
+</div>
+</h2>
+<ol>
+<li><a href="#1-architecture--traffic-model" target="_blank" rel="noopener noreferrer">Architecture &amp; Traffic Model</a></li>
+<li><a href="#2-prerequisites--global-placeholder-reference" target="_blank" rel="noopener noreferrer">Prerequisites &amp; Global Placeholder Reference</a></li>
+<li><a href="#step-0-initializing-a-non-root-admin-user" target="_blank" rel="noopener noreferrer">Step 0: Initializing a Non-Root Admin User</a></li>
+<li><a href="#step-1-ssh-hardening-custom-port--public-key-authentication" target="_blank" rel="noopener noreferrer">Step 1: SSH Hardening (Custom Port &amp; Public Key Authentication)</a></li>
+<li><a href="#step-2-system-hardening--environment-initialization-01-setup-systemsh" target="_blank" rel="noopener noreferrer">Step 2: System Hardening &amp; Environment Initialization (<code>01-setup-system.sh</code>)</a></li>
+<li><a href="#step-3-nftables-advanced-firewall-configuration-port-hopping--scan-trap" target="_blank" rel="noopener noreferrer">Step 3: nftables Advanced Firewall Configuration (Port Hopping &amp; Scan Trap)</a></li>
+<li><a href="#step-4-automated-lets-encrypt-certificate-issuance--lighttpd-deployment" target="_blank" rel="noopener noreferrer">Step 4: Automated Let&rsquo;s Encrypt Certificate Issuance &amp; lighttpd Deployment</a></li>
+<li><a href="#step-5-installing-the-mihomo-core-binary-02-install-mihomosh" target="_blank" rel="noopener noreferrer">Step 5: Installing the mihomo Core Binary (<code>02-install-mihomo.sh</code>)</a></li>
+<li><a href="#step-6-generating-ech-keypair--launching-the-server-daemon" target="_blank" rel="noopener noreferrer">Step 6: Generating ECH Keypair &amp; Launching the Server Daemon</a></li>
+<li><a href="#step-7-cross-platform-client-deployment-guide-desktop--mobile" target="_blank" rel="noopener noreferrer">Step 7: Cross-Platform Client Deployment Guide (Desktop &amp; Mobile)</a></li>
+<li><a href="#step-8-verification--troubleshooting" target="_blank" rel="noopener noreferrer">Step 8: Verification &amp; Troubleshooting</a></li>
+<li><a href="#step-9-seamless-hot-upgrades-upgrade-mihomosh" target="_blank" rel="noopener noreferrer">Step 9: Seamless Hot Upgrades (<code>upgrade-mihomo.sh</code>)</a></li>
+</ol>
+<hr>
+<h2 id="1-architecture--traffic-model" >
+<div>
+    <a href="#1-architecture--traffic-model">
+        #
+    </a>
+    1. Architecture &amp; Traffic Model
+</div>
+</h2>
+<p>The guiding principles of this deployment are <strong>minimal attack surface exposure, protocol-conforming traffic simulation, active defensive hardening, and high network resilience</strong>.</p>
+<h3 id="11-traffic-flow-diagram" >
+<div>
+    <a href="#11-traffic-flow-diagram">
+        ##
+    </a>
+    1.1 Traffic Flow Diagram
+</div>
+</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">Client mihomo (Desktop TUN / Mobile VpnService)
+</span></span><span class="line"><span class="cl">        │
+</span></span><span class="line"><span class="cl">        │ [1] UDP Dynamic Port Hopping Traffic (Range: &lt;HOP_PORT_START&gt;-&lt;HOP_PORT_END&gt;)
+</span></span><span class="line"><span class="cl">        │     TLS Handshake with ECH (Outer SNI: &lt;OUTER_ECH_DOMAIN&gt;, Encrypted Inner SNI: &lt;YOUR_DOMAIN&gt;)
+</span></span><span class="line"><span class="cl">        ▼
+</span></span><span class="line"><span class="cl">Server Public Network Interface (&lt;WAN_INTERFACE&gt;)
+</span></span><span class="line"><span class="cl">        │
+</span></span><span class="line"><span class="cl">        ├─► [nftables Filter Chain]
+</span></span><span class="line"><span class="cl">        │    ├─ Invalid TCP flags / malformed packets ──► DROP
+</span></span><span class="line"><span class="cl">        │    ├─ Unauthorized TCP scan hitting traps ──► Add to scan_blacklist (1 hour ban)
+</span></span><span class="line"><span class="cl">        │    ├─ SSH rate limiting (&lt;CUSTOM_SSH_PORT&gt;) ──► Ban IP if &gt; 4 new connections/min
+</span></span><span class="line"><span class="cl">        │    └─ Inbound IPv6 external traffic ──► DROP (eliminate side-channel leaks)
+</span></span><span class="line"><span class="cl">        │
+</span></span><span class="line"><span class="cl">        └─► [nftables NAT Chain (PREROUTING)]
+</span></span><span class="line"><span class="cl">             └─ DNAT &lt;HOP_PORT_START&gt;-&lt;HOP_PORT_END&gt;/udp ──► 127.0.0.1:&lt;MIHOMO_LOCAL_PORT&gt;
+</span></span><span class="line"><span class="cl">                                                               │
+</span></span><span class="line"><span class="cl">                                                               ▼
+</span></span><span class="line"><span class="cl">                                                   mihomo Server Daemon
+</span></span><span class="line"><span class="cl">                             (Runs as restricted user, strictly bound to 127.0.0.1:&lt;MIHOMO_LOCAL_PORT&gt;/udp)
+</span></span><span class="line"><span class="cl">                                                               │
+</span></span><span class="line"><span class="cl">                           ┌───────────────────────────────────┴───────────────────────────────────┐
+</span></span><span class="line"><span class="cl">                           ▼                                                                       ▼
+</span></span><span class="line"><span class="cl">                 [Valid Hysteria2 Auth]                                                [Probe / Unauthenticated]
+</span></span><span class="line"><span class="cl">                 Decrypted inner ECH matches                                           masquerade fallback to local
+</span></span><span class="line"><span class="cl">                 High-speed BBR forwarding out                                         https://127.0.0.1:443
+</span></span><span class="line"><span class="cl">                                                                                                   │
+</span></span><span class="line"><span class="cl">                                                                                                   ▼
+</span></span><span class="line"><span class="cl">                                                                                            lighttpd Static Site
+</span></span><span class="line"><span class="cl">                                                                                     (Serves legit site, A+ TLS grade)
+</span></span></code></pre></div><h3 id="12-core-architectural-advantages" >
+<div>
+    <a href="#12-core-architectural-advantages">
+        ##
+    </a>
+    1.2 Core Architectural Advantages
+</div>
+</h3>
+<ol>
+<li><strong>Zero Public Port Exposure</strong>: The mihomo service does not bind directly to any public IP address; it listens exclusively on <code>127.0.0.1</code>. External port scanners cannot discover any listening proxy ports on the public interface.</li>
+<li><strong>UDP Dynamic Port Hopping</strong>: Clients randomly cycle through high-order ports within <code>&lt;HOP_PORT_START&gt;-&lt;HOP_PORT_END&gt;</code>. The Linux kernel dynamically rewrites destination addresses to the local listener via <code>nftables DNAT</code>. This balances the transmission load and avoids throttling caused by single-port UDP anomalies.</li>
+<li><strong>ECH (Encrypted Client Hello)</strong>: The true hostname <code>&lt;YOUR_DOMAIN&gt;</code> is completely encrypted within the TLS payload. Observers on the public transit link only see a benign, high-reputation outer domain (<code>&lt;OUTER_ECH_DOMAIN&gt;</code>), preventing plain-text SNI inspection.</li>
+<li><strong>Active Probe Fallback (Masquerade)</strong>: Any unauthenticated or exploratory HTTP/HTTPS requests hitting the port are natively redirected back to the local <code>lighttpd</code> static web server, behaving like a standard HTTP/2 web presence.</li>
+<li><strong>Kernel Sandboxing &amp; Proactive Defense</strong>: Systemd isolates the daemon by dropping all unnecessary Linux capabilities. Concurrently, <code>nftables</code> sets port scanning traps that immediately blacklist any IP scanning unexposed TCP ports.</li>
+</ol>
+<hr>
+<h2 id="2-prerequisites--global-placeholder-reference" >
+<div>
+    <a href="#2-prerequisites--global-placeholder-reference">
+        #
+    </a>
+    2. Prerequisites &amp; Global Placeholder Reference
+</div>
+</h2>
+<p>To safeguard sensitive credentials, replace the following placeholders with your actual parameters before running any commands:</p>
+<table>
+	<thead>
+			<tr>
+					<th>Placeholder</th>
+					<th>Description &amp; Recommended Value</th>
+					<th>Example</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td><code>&lt;YOUR_SUDO_USER&gt;</code></td>
+					<td>Non-root administrative user for the server</td>
+					<td><code>admin</code> or <code>ops</code></td>
+			</tr>
+			<tr>
+					<td><code>&lt;SERVER_IP&gt;</code></td>
+					<td>Server public IPv4 address</td>
+					<td><code>198.51.100.1</code></td>
+			</tr>
+			<tr>
+					<td><code>&lt;WAN_INTERFACE&gt;</code></td>
+					<td>Primary public network interface name</td>
+					<td><code>eth0</code>, <code>ens3</code>, or <code>ens18</code></td>
+			</tr>
+			<tr>
+					<td><code>&lt;CUSTOM_SSH_PORT&gt;</code></td>
+					<td>High-order custom SSH port</td>
+					<td><code>54321</code></td>
+			</tr>
+			<tr>
+					<td><code>&lt;YOUR_DOMAIN&gt;</code></td>
+					<td>Your registered domain for the gateway / fallback site</td>
+					<td><code>nodes.example.com</code></td>
+			</tr>
+			<tr>
+					<td><code>&lt;OUTER_ECH_DOMAIN&gt;</code></td>
+					<td>Benign public domain used as outer ECH SNI</td>
+					<td><code>cloudflare.com</code></td>
+			</tr>
+			<tr>
+					<td><code>&lt;YOUR_EMAIL&gt;</code></td>
+					<td>Email address for Let&rsquo;s Encrypt notifications</td>
+					<td><code>admin@example.com</code></td>
+			</tr>
+			<tr>
+					<td><code>&lt;YOUR_CLOUDFLARE_API_TOKEN&gt;</code></td>
+					<td>Cloudflare API Token with <code>Zone - DNS - Edit</code> permissions</td>
+					<td>32+ character string</td>
+			</tr>
+			<tr>
+					<td><code>&lt;MIHOMO_LOCAL_PORT&gt;</code></td>
+					<td>Local loopback UDP port for mihomo</td>
+					<td><code>18000</code></td>
+			</tr>
+			<tr>
+					<td><code>&lt;HOP_PORT_START&gt;-&lt;HOP_PORT_END&gt;</code></td>
+					<td>UDP Port hopping range</td>
+					<td><code>40000-50000</code></td>
+			</tr>
+			<tr>
+					<td><code>&lt;YOUR_STRONG_PASSWORD&gt;</code></td>
+					<td>Strong password for Hysteria2 authentication</td>
+					<td>Generate via <code>openssl rand -base64 32</code></td>
+			</tr>
+			<tr>
+					<td><code>&lt;YOUR_CONTROLLER_SECRET&gt;</code></td>
+					<td>Secret token for external-controller API</td>
+					<td>Generate via <code>openssl rand -base64 16</code></td>
+			</tr>
+			<tr>
+					<td><code>&lt;YOUR_ECH_CONFIG_BASE64&gt;</code></td>
+					<td>Single-line base64 public ECH Config string</td>
+					<td>Base64 string</td>
+			</tr>
+			<tr>
+					<td><code>&lt;YOUR_ECH_PRIVATE_KEY&gt;</code></td>
+					<td>Multi-line private ECH Key block</td>
+					<td>PEM block with BEGIN/END markers</td>
+			</tr>
+	</tbody>
+</table>
+<hr>
+<h2 id="step-0-initializing-a-non-root-admin-user" >
+<div>
+    <a href="#step-0-initializing-a-non-root-admin-user">
+        #
+    </a>
+    Step 0: Initializing a Non-Root Admin User
+</div>
+</h2>
+<p>Following the principle of least privilege, avoid performing routine management as <code>root</code>. Log into your VPS and create a sudo-enabled user:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># 1. Log in as root, create a dedicated admin user, and append to the wheel group</span>
+</span></span><span class="line"><span class="cl">useradd -m -G wheel -s /bin/bash &lt;YOUR_SUDO_USER&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 2. Set a strong password</span>
+</span></span><span class="line"><span class="cl">passwd &lt;YOUR_SUDO_USER&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 3. Grant sudo privileges to the wheel group</span>
+</span></span><span class="line"><span class="cl"><span class="nv">EDITOR</span><span class="o">=</span>nano visudo
+</span></span><span class="line"><span class="cl"><span class="c1"># Locate: # %wheel ALL=(ALL:ALL) ALL</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># Uncomment the line: %wheel ALL=(ALL:ALL) ALL</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># Save and exit (Ctrl+O, Enter, Ctrl+X)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 4. Switch to the newly created user</span>
+</span></span><span class="line"><span class="cl">su - &lt;YOUR_SUDO_USER&gt;
+</span></span></code></pre></div><blockquote>
+<p>[!TIP]
+Append your local SSH public key to <code>/home/&lt;YOUR_SUDO_USER&gt;/.ssh/authorized_keys</code> now so that public key authentication works right away.</p>
+</blockquote>
+<hr>
+<h2 id="step-1-ssh-hardening-custom-port--public-key-authentication" >
+<div>
+    <a href="#step-1-ssh-hardening-custom-port--public-key-authentication">
+        #
+    </a>
+    Step 1: SSH Hardening (Custom Port &amp; Public Key Authentication)
+</div>
+</h2>
+<p>Automated scanners continuously target port 22. Harden your SSH daemon using a modular drop-in configuration under <code>/etc/ssh/sshd_config.d/</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo tee /etc/ssh/sshd_config.d/99-hardening.conf <span class="s">&lt;&lt; &#39;EOF&#39;
+</span></span></span><span class="line"><span class="cl"><span class="s"># Custom high-order port (must match nftables rules)
+</span></span></span><span class="line"><span class="cl"><span class="s">Port &lt;CUSTOM_SSH_PORT&gt;
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s"># Enforce public key authentication only
+</span></span></span><span class="line"><span class="cl"><span class="s">PasswordAuthentication no
+</span></span></span><span class="line"><span class="cl"><span class="s">KbdInteractiveAuthentication no
+</span></span></span><span class="line"><span class="cl"><span class="s">AuthenticationMethods publickey
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s"># Prohibit direct root logins
+</span></span></span><span class="line"><span class="cl"><span class="s">PermitRootLogin prohibit-password
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s"># Session and authentication limits
+</span></span></span><span class="line"><span class="cl"><span class="s">MaxAuthTries 3
+</span></span></span><span class="line"><span class="cl"><span class="s">MaxSessions 2
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s"># Keepalive and idle timeout
+</span></span></span><span class="line"><span class="cl"><span class="s">ClientAliveInterval 300
+</span></span></span><span class="line"><span class="cl"><span class="s">ClientAliveCountMax 2
+</span></span></span><span class="line"><span class="cl"><span class="s">EOF</span>
+</span></span></code></pre></div><p>Validate and restart SSH:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo sshd -t
+</span></span><span class="line"><span class="cl">sudo systemctl restart sshd
+</span></span></code></pre></div><blockquote>
+<p>[!CAUTION]
+<strong>Do not close your current terminal session yet!</strong> Open a new terminal on your local machine to verify connectivity:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ssh -p &lt;CUSTOM_SSH_PORT&gt; &lt;YOUR_SUDO_USER&gt;@&lt;SERVER_IP&gt;
+</span></span></code></pre></div><p>Proceed only after verifying that public key authentication works as expected.</p>
+</blockquote>
+<hr>
+<h2 id="step-2-system-hardening--environment-initialization-01-setup-systemsh" >
+<div>
+    <a href="#step-2-system-hardening--environment-initialization-01-setup-systemsh">
+        #
+    </a>
+    Step 2: System Hardening &amp; Environment Initialization (<code>01-setup-system.sh</code>)
+</div>
+</h2>
+<p>This step installs essential dependencies, sets up dedicated isolated system users, configures directories with strict access permissions, and applies network stack sysctl tunings.</p>
+<h3 id="21-script-implementation" >
+<div>
+    <a href="#21-script-implementation">
+        ##
+    </a>
+    2.1 Script Implementation
+</div>
+</h3>
+<p>Create a temporary script <code>01-setup-system.sh</code> on the server:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">cat <span class="s">&lt;&lt; &#39;EOF&#39; &gt; 01-setup-system.sh
+</span></span></span><span class="line"><span class="cl"><span class="s">#!/usr/bin/env bash
+</span></span></span><span class="line"><span class="cl"><span class="s">set -euo pipefail
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">if [ &#34;$(id -u)&#34; -ne 0 ]; then
+</span></span></span><span class="line"><span class="cl"><span class="s">  echo &#34;Error: Must run as root: sudo bash 01-setup-system.sh&#34; &gt;&amp;2
+</span></span></span><span class="line"><span class="cl"><span class="s">  exit 1
+</span></span></span><span class="line"><span class="cl"><span class="s">fi
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">if ! command -v pacman &gt;/dev/null 2&gt;&amp;1; then
+</span></span></span><span class="line"><span class="cl"><span class="s">  echo &#34;Error: This script is tailored for Arch Linux. pacman not found!&#34; &gt;&amp;2
+</span></span></span><span class="line"><span class="cl"><span class="s">  exit 1
+</span></span></span><span class="line"><span class="cl"><span class="s">fi
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">echo &#34;&gt;&gt; [1/6] Installing system dependencies...&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">pacman -S --needed --noconfirm nftables lighttpd certbot certbot-dns-cloudflare curl openssl ca-certificates
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">echo &#34;&gt;&gt; [2/6] Configuring dedicated system user and security group...&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">if ! id mihomo &gt;/dev/null 2&gt;&amp;1; then
+</span></span></span><span class="line"><span class="cl"><span class="s">  useradd -r -s /usr/bin/nologin -M mihomo
+</span></span></span><span class="line"><span class="cl"><span class="s">fi
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">if ! getent group ssl-cert &gt;/dev/null 2&gt;&amp;1; then
+</span></span></span><span class="line"><span class="cl"><span class="s">  groupadd -r ssl-cert
+</span></span></span><span class="line"><span class="cl"><span class="s">fi
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">usermod -aG ssl-cert mihomo
+</span></span></span><span class="line"><span class="cl"><span class="s">usermod -aG ssl-cert http
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">echo &#34;&gt;&gt; [3/6] Setting up protected directories and permissions...&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">mkdir -p /etc/mihomo
+</span></span></span><span class="line"><span class="cl"><span class="s">chown root:mihomo /etc/mihomo
+</span></span></span><span class="line"><span class="cl"><span class="s">chmod 750 /etc/mihomo
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">mkdir -p /var/lib/mihomo
+</span></span></span><span class="line"><span class="cl"><span class="s">chown mihomo:mihomo /var/lib/mihomo
+</span></span></span><span class="line"><span class="cl"><span class="s">chmod 750 /var/lib/mihomo
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">mkdir -p /etc/ssl/mihomo
+</span></span></span><span class="line"><span class="cl"><span class="s">chown -R root:ssl-cert /etc/ssl/mihomo
+</span></span></span><span class="line"><span class="cl"><span class="s">chmod 750 /etc/ssl/mihomo
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">mkdir -p /srv/http/disguise
+</span></span></span><span class="line"><span class="cl"><span class="s">chown -R http:http /srv/http/disguise
+</span></span></span><span class="line"><span class="cl"><span class="s">chmod 755 /srv/http/disguise
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">echo &#34;&gt;&gt; [4/6] Applying kernel network tuning &amp; local routing...&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">WAN_IFACE=&#34;$(ip route show default 2&gt;/dev/null | awk &#39;/default/ {print $5; exit}&#39; || true)&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">WAN_IFACE=&#34;${WAN_IFACE:-&lt;WAN_INTERFACE&gt;}&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">SYSCTL_FILE=/etc/sysctl.d/99-mihomo-security.conf
+</span></span></span><span class="line"><span class="cl"><span class="s">cat &gt; &#34;$SYSCTL_FILE&#34; &lt;&lt; SYSCTL_EOF</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># Enable localnet routing for DNAT to 127.0.0.1 (Required for port hopping)</span>
+</span></span><span class="line"><span class="cl">net.ipv4.conf.all.route_localnet <span class="o">=</span> <span class="m">1</span>
+</span></span><span class="line"><span class="cl">net.ipv4.conf.<span class="si">${</span><span class="nv">WAN_IFACE</span><span class="si">}</span>.route_localnet <span class="o">=</span> <span class="m">1</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># SYN Flood mitigation</span>
+</span></span><span class="line"><span class="cl">net.ipv4.tcp_syncookies <span class="o">=</span> <span class="m">1</span>
+</span></span><span class="line"><span class="cl">net.ipv4.tcp_max_syn_backlog <span class="o">=</span> <span class="m">4096</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Reverse Path Filtering</span>
+</span></span><span class="line"><span class="cl">net.ipv4.conf.all.rp_filter <span class="o">=</span> <span class="m">1</span>
+</span></span><span class="line"><span class="cl">net.ipv4.conf.<span class="si">${</span><span class="nv">WAN_IFACE</span><span class="si">}</span>.rp_filter <span class="o">=</span> <span class="m">1</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Disable ICMP redirects</span>
+</span></span><span class="line"><span class="cl">net.ipv4.conf.all.accept_redirects <span class="o">=</span> <span class="m">0</span>
+</span></span><span class="line"><span class="cl">net.ipv4.conf.all.send_redirects <span class="o">=</span> <span class="m">0</span>
+</span></span><span class="line"><span class="cl">net.ipv4.conf.all.accept_source_route <span class="o">=</span> <span class="m">0</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Ignore broadcast ping</span>
+</span></span><span class="line"><span class="cl">net.ipv4.icmp_echo_ignore_broadcasts <span class="o">=</span> <span class="m">1</span>
+</span></span><span class="line"><span class="cl">net.ipv4.icmp_ignore_bogus_error_responses <span class="o">=</span> <span class="m">1</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># File system and kernel pointer protection</span>
+</span></span><span class="line"><span class="cl">fs.protected_hardlinks <span class="o">=</span> <span class="m">1</span>
+</span></span><span class="line"><span class="cl">fs.protected_symlinks <span class="o">=</span> <span class="m">1</span>
+</span></span><span class="line"><span class="cl">kernel.kptr_restrict <span class="o">=</span> <span class="m">2</span>
+</span></span><span class="line"><span class="cl">kernel.dmesg_restrict <span class="o">=</span> <span class="m">1</span>
+</span></span><span class="line"><span class="cl">SYSCTL_EOF
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">sysctl -p <span class="s2">&#34;</span><span class="nv">$SYSCTL_FILE</span><span class="s2">&#34;</span> &gt;/dev/null 2&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="o">||</span> <span class="nb">true</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nb">echo</span> <span class="s2">&#34;&gt;&gt; [5/6] Restricting journal log retention...&#34;</span>
+</span></span><span class="line"><span class="cl">mkdir -p /etc/systemd/journald.conf.d
+</span></span><span class="line"><span class="cl">cat &gt; /etc/systemd/journald.conf.d/99-mihomo-limit.conf <span class="s">&lt;&lt; &#39;JOURNAL_EOF&#39;
+</span></span></span><span class="line"><span class="cl"><span class="s">[Journal]
+</span></span></span><span class="line"><span class="cl"><span class="s">SystemMaxUse=256M
+</span></span></span><span class="line"><span class="cl"><span class="s">MaxRetentionSec=1month
+</span></span></span><span class="line"><span class="cl"><span class="s">JOURNAL_EOF</span>
+</span></span><span class="line"><span class="cl">systemctl restart systemd-journald <span class="o">||</span> <span class="nb">true</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nb">echo</span> <span class="s2">&#34;&gt;&gt; [6/6] Initializing Certbot deploy hook directory...&#34;</span>
+</span></span><span class="line"><span class="cl">mkdir -p /etc/letsencrypt/renewal-hooks/deploy
+</span></span><span class="line"><span class="cl">chmod <span class="m">750</span> /etc/letsencrypt/renewal-hooks/deploy
+</span></span><span class="line"><span class="cl">systemctl daemon-reload
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nb">echo</span> <span class="s2">&#34;&gt;&gt; System hardening and environment setup complete.&#34;</span>
+</span></span><span class="line"><span class="cl">EOF
+</span></span></code></pre></div><h3 id="22-execution" >
+<div>
+    <a href="#22-execution">
+        ##
+    </a>
+    2.2 Execution
+</div>
+</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo bash 01-setup-system.sh
+</span></span><span class="line"><span class="cl">rm -f 01-setup-system.sh
+</span></span></code></pre></div><hr>
+<h2 id="step-3-nftables-advanced-firewall-configuration-port-hopping--scan-trap" >
+<div>
+    <a href="#step-3-nftables-advanced-firewall-configuration-port-hopping--scan-trap">
+        #
+    </a>
+    Step 3: nftables Advanced Firewall Configuration (Port Hopping &amp; Scan Trap)
+</div>
+</h2>
+<p><code>nftables</code> provides native, high-performance packet filtering and translation:</p>
+<ol>
+<li><strong>UDP Port Hopping DNAT</strong>: Incoming UDP packets on <code>&lt;HOP_PORT_START&gt;-&lt;HOP_PORT_END&gt;</code> are rewritten to <code>127.0.0.1:&lt;MIHOMO_LOCAL_PORT&gt;</code>.</li>
+<li><strong>SSH Rate Limiting</strong>: Exceeding 4 new connections per minute results in an automatic 1-hour IP ban.</li>
+<li><strong>Port Scan Trap</strong>: Any connection attempt to non-whitelisted TCP ports immediately triggers an automatic 1-hour ban.</li>
+<li><strong>Packet Sanitization</strong>: Invalid TCP flag combinations (NULL, Xmas, etc.) are immediately dropped.</li>
+</ol>
+<p>Edit <code>/etc/nftables.conf</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo nano /etc/nftables.conf
+</span></span></code></pre></div><p>Paste the following ruleset:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-txt" data-lang="txt"><span class="line"><span class="cl">#!/usr/sbin/nft -f
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">flush ruleset
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"># -------------------------------------------------------------
+</span></span><span class="line"><span class="cl"># Variable Definitions
+</span></span><span class="line"><span class="cl"># -------------------------------------------------------------
+</span></span><span class="line"><span class="cl">define WAN_IFACE   = &#34;&lt;WAN_INTERFACE&gt;&#34;
+</span></span><span class="line"><span class="cl">define SSH_PORT    = &lt;CUSTOM_SSH_PORT&gt;
+</span></span><span class="line"><span class="cl">define HTTP_PORT   = 80
+</span></span><span class="line"><span class="cl">define HTTPS_PORT  = 443
+</span></span><span class="line"><span class="cl">define HY2_PORT    = &lt;MIHOMO_LOCAL_PORT&gt;
+</span></span><span class="line"><span class="cl">define HY2_RANGE   = &lt;HOP_PORT_START&gt;-&lt;HOP_PORT_END&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"># -------------------------------------------------------------
+</span></span><span class="line"><span class="cl"># Filter Table (inet filter)
+</span></span><span class="line"><span class="cl"># -------------------------------------------------------------
+</span></span><span class="line"><span class="cl">table inet filter {
+</span></span><span class="line"><span class="cl">    # Dynamic scan blacklist (automatic 1-hour expiration)
+</span></span><span class="line"><span class="cl">    set scan_blacklist {
+</span></span><span class="line"><span class="cl">        type ipv4_addr
+</span></span><span class="line"><span class="cl">        flags dynamic, timeout
+</span></span><span class="line"><span class="cl">        timeout 1h
+</span></span><span class="line"><span class="cl">    }
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    # SSH connection rate tracker
+</span></span><span class="line"><span class="cl">    set ssh_ratelimit {
+</span></span><span class="line"><span class="cl">        type ipv4_addr
+</span></span><span class="line"><span class="cl">        flags dynamic, timeout
+</span></span><span class="line"><span class="cl">        timeout 1m
+</span></span><span class="line"><span class="cl">    }
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    chain input {
+</span></span><span class="line"><span class="cl">        type filter hook input priority filter; policy drop;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        # 1. Drop packets from blacklisted IPs immediately
+</span></span><span class="line"><span class="cl">        ip saddr @scan_blacklist drop
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        # 2. Allow established and related connections
+</span></span><span class="line"><span class="cl">        ct state established,related accept
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        # 3. Allow loopback traffic
+</span></span><span class="line"><span class="cl">        iif &#34;lo&#34; accept
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        # 4. Drop all inbound external IPv6 traffic
+</span></span><span class="line"><span class="cl">        meta nfproto ipv6 drop
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        # 5. Drop invalid connection states
+</span></span><span class="line"><span class="cl">        ct state invalid drop
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        # 6. Drop malformed TCP flag combinations (NULL, Xmas, SYN-FIN, etc.)
+</span></span><span class="line"><span class="cl">        tcp flags &amp; (fin|syn|rst|psh|ack|urg) == 0x0 drop
+</span></span><span class="line"><span class="cl">        tcp flags &amp; (fin|syn|rst|psh|ack|urg) == (fin|psh|urg) drop
+</span></span><span class="line"><span class="cl">        tcp flags &amp; (fin|syn) == (fin|syn) drop
+</span></span><span class="line"><span class="cl">        tcp flags &amp; (syn|rst) == (syn|rst) drop
+</span></span><span class="line"><span class="cl">        tcp flags &amp; (fin|syn|rst|ack) != syn ct state new drop
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        # 7. ICMP rate limiting (allows network diagnostics while mitigating floods)
+</span></span><span class="line"><span class="cl">        ip protocol icmp icmp type { echo-request, echo-reply, destination-unreachable, time-exceeded } limit rate 5/second accept
+</span></span><span class="line"><span class="cl">        ip protocol icmp drop
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        # 8. SSH brute-force protection
+</span></span><span class="line"><span class="cl">        tcp dport $SSH_PORT ct state new add @ssh_ratelimit { ip saddr limit rate 4/minute burst 4 packets } accept
+</span></span><span class="line"><span class="cl">        tcp dport $SSH_PORT ct state new add @scan_blacklist { ip saddr } drop
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        # 9. Whitelist HTTP &amp; HTTPS ports for the fallback site
+</span></span><span class="line"><span class="cl">        tcp dport { $HTTP_PORT, $HTTPS_PORT } accept
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        # 10. Allow DNAT-translated Hysteria2 UDP packets
+</span></span><span class="line"><span class="cl">        # Note: Packets must already have their destination translated to 127.0.0.1
+</span></span><span class="line"><span class="cl">        ip daddr 127.0.0.1 udp dport $HY2_PORT accept
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        # 11. Port scan trap (external interface only)
+</span></span><span class="line"><span class="cl">        # Any new TCP connection touching an unopened port triggers an automatic ban
+</span></span><span class="line"><span class="cl">        iifname $WAN_IFACE tcp flags &amp; syn == syn ct state new add @scan_blacklist { ip saddr } drop
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        # 12. Default drop
+</span></span><span class="line"><span class="cl">        drop
+</span></span><span class="line"><span class="cl">    }
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    chain forward {
+</span></span><span class="line"><span class="cl">        type filter hook forward priority filter; policy drop;
+</span></span><span class="line"><span class="cl">    }
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    chain output {
+</span></span><span class="line"><span class="cl">        type filter hook output priority filter; policy accept;
+</span></span><span class="line"><span class="cl">    }
+</span></span><span class="line"><span class="cl">}
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"># -------------------------------------------------------------
+</span></span><span class="line"><span class="cl"># NAT Table (Port Hopping Forwarding)
+</span></span><span class="line"><span class="cl"># -------------------------------------------------------------
+</span></span><span class="line"><span class="cl">table ip nat {
+</span></span><span class="line"><span class="cl">    chain prerouting {
+</span></span><span class="line"><span class="cl">        type nat hook prerouting priority dstnat; policy accept;
+</span></span><span class="line"><span class="cl">        iifname $WAN_IFACE udp dport $HY2_RANGE dnat to 127.0.0.1:$HY2_PORT
+</span></span><span class="line"><span class="cl">    }
+</span></span><span class="line"><span class="cl">}
+</span></span></code></pre></div><p>Apply and enable the firewall:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo chmod <span class="m">644</span> /etc/nftables.conf
+</span></span><span class="line"><span class="cl">sudo nft -c -f /etc/nftables.conf
+</span></span><span class="line"><span class="cl">sudo systemctl <span class="nb">enable</span> --now nftables
+</span></span><span class="line"><span class="cl">sudo systemctl status nftables
+</span></span></code></pre></div><blockquote>
+<p>[!NOTE]
+Check currently banned IPs anytime with:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo nft list <span class="nb">set</span> inet filter scan_blacklist
+</span></span></code></pre></div></blockquote>
+<hr>
+<h2 id="step-4-automated-lets-encrypt-certificate-issuance--lighttpd-deployment" >
+<div>
+    <a href="#step-4-automated-lets-encrypt-certificate-issuance--lighttpd-deployment">
+        #
+    </a>
+    Step 4: Automated Let&rsquo;s Encrypt Certificate Issuance &amp; lighttpd Deployment
+</div>
+</h2>
+<p>To achieve an A+ TLS grade for the fallback site and ensure that private keys remain readable only by the <code>ssl-cert</code> group, we use Certbot with an automated deploy hook.</p>
+<h3 id="41-cloudflare-dns-api-token-configuration" >
+<div>
+    <a href="#41-cloudflare-dns-api-token-configuration">
+        ##
+    </a>
+    4.1 Cloudflare DNS API Token Configuration
+</div>
+</h3>
+<p>Using Let&rsquo;s Encrypt via DNS-01 challenge is straightforward: it avoids occupying port 80 and handles renewal completely in the background:</p>
+<ol>
+<li>In the Cloudflare Dashboard, go to <strong>My Profile</strong> -&gt; <strong>API Tokens</strong> -&gt; <strong>Create Token</strong>.</li>
+<li>Select the <strong>Edit zone DNS</strong> template, assign <code>Zone - DNS - Edit</code>, and select your target zone.</li>
+<li>Save the credential on the server with restricted permissions:
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo mkdir -p /etc/letsencrypt
+</span></span><span class="line"><span class="cl">sudo tee /etc/letsencrypt/cloudflare.ini <span class="s">&lt;&lt; &#39;EOF&#39;
+</span></span></span><span class="line"><span class="cl"><span class="s">dns_cloudflare_api_token = &lt;YOUR_CLOUDFLARE_API_TOKEN&gt;
+</span></span></span><span class="line"><span class="cl"><span class="s">EOF</span>
+</span></span><span class="line"><span class="cl">sudo chown root:root /etc/letsencrypt/cloudflare.ini
+</span></span><span class="line"><span class="cl">sudo chmod <span class="m">600</span> /etc/letsencrypt/cloudflare.ini
+</span></span></code></pre></div></li>
+</ol>
+<h3 id="42-deploy-hook-for-automatic-permissions--service-reload" >
+<div>
+    <a href="#42-deploy-hook-for-automatic-permissions--service-reload">
+        ##
+    </a>
+    4.2 Deploy Hook for Automatic Permissions &amp; Service Reload
+</div>
+</h3>
+<p>Create <code>/etc/letsencrypt/renewal-hooks/deploy/mihomo-deploy-hook.sh</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo tee /etc/letsencrypt/renewal-hooks/deploy/mihomo-deploy-hook.sh <span class="s">&lt;&lt; &#39;EOF&#39;
+</span></span></span><span class="line"><span class="cl"><span class="s">#!/usr/bin/env bash
+</span></span></span><span class="line"><span class="cl"><span class="s">set -euo pipefail
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">if [ &#34;$(id -u)&#34; -ne 0 ]; then
+</span></span></span><span class="line"><span class="cl"><span class="s">    echo &#34;Error: deploy hook must run as root.&#34; &gt;&amp;2
+</span></span></span><span class="line"><span class="cl"><span class="s">    exit 1
+</span></span></span><span class="line"><span class="cl"><span class="s">fi
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">TARGET_DIR=&#34;/etc/ssl/mihomo&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">if [ ! -d &#34;$TARGET_DIR&#34; ]; then
+</span></span></span><span class="line"><span class="cl"><span class="s">    mkdir -p &#34;$TARGET_DIR&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">    chown root:ssl-cert &#34;$TARGET_DIR&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">    chmod 750 &#34;$TARGET_DIR&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">fi
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">if [ -z &#34;${RENEWED_LINEAGE:-}&#34; ]; then
+</span></span></span><span class="line"><span class="cl"><span class="s">    DOMAIN=&#34;${1:-}&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">    if [ -n &#34;$DOMAIN&#34; ] &amp;&amp; [ -d &#34;/etc/letsencrypt/live/$DOMAIN&#34; ]; then
+</span></span></span><span class="line"><span class="cl"><span class="s">        RENEWED_LINEAGE=&#34;/etc/letsencrypt/live/$DOMAIN&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">    else
+</span></span></span><span class="line"><span class="cl"><span class="s">        echo &#34;Error: Certificate lineage not found.&#34; &gt;&amp;2
+</span></span></span><span class="line"><span class="cl"><span class="s">        exit 1
+</span></span></span><span class="line"><span class="cl"><span class="s">    fi
+</span></span></span><span class="line"><span class="cl"><span class="s">fi
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">echo &#34;&gt;&gt; Distributing certificate files to $TARGET_DIR ...&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">cp -f &#34;$RENEWED_LINEAGE/fullchain.pem&#34; &#34;$TARGET_DIR/fullchain.pem&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">cp -f &#34;$RENEWED_LINEAGE/privkey.pem&#34;   &#34;$TARGET_DIR/privkey.pem&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s"># Restrict permissions: private key to 640 root:ssl-cert, public certificate to 644
+</span></span></span><span class="line"><span class="cl"><span class="s">chown root:ssl-cert &#34;$TARGET_DIR/privkey.pem&#34; &#34;$TARGET_DIR/fullchain.pem&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">chmod 640 &#34;$TARGET_DIR/privkey.pem&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">chmod 644 &#34;$TARGET_DIR/fullchain.pem&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s"># Reload web server and relay daemon
+</span></span></span><span class="line"><span class="cl"><span class="s">systemctl is-active --quiet lighttpd &amp;&amp; systemctl reload-or-restart lighttpd || true
+</span></span></span><span class="line"><span class="cl"><span class="s">systemctl is-active --quiet mihomo &amp;&amp; systemctl reload-or-restart mihomo || true
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">logger -t certbot-deploy-hook &#34;Let&#39;s Encrypt certificates deployed and services reloaded.&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">EOF</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">sudo chown root:root /etc/letsencrypt/renewal-hooks/deploy/mihomo-deploy-hook.sh
+</span></span><span class="line"><span class="cl">sudo chmod <span class="m">750</span> /etc/letsencrypt/renewal-hooks/deploy/mihomo-deploy-hook.sh
+</span></span></code></pre></div><h3 id="43-initial-certificate-issuance" >
+<div>
+    <a href="#43-initial-certificate-issuance">
+        ##
+    </a>
+    4.3 Initial Certificate Issuance
+</div>
+</h3>
+<p>Issue the certificate with a single standard Certbot command:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo certbot certonly <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --dns-cloudflare <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --dns-cloudflare-propagation-seconds <span class="m">30</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --email &lt;YOUR_EMAIL&gt; <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --agree-tos <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --no-eff-email <span class="se">\
+</span></span></span><span class="line"><span class="cl">  -d &lt;YOUR_DOMAIN&gt; <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --deploy-hook /etc/letsencrypt/renewal-hooks/deploy/mihomo-deploy-hook.sh
+</span></span></code></pre></div><p><strong>Enable the Systemd Auto-Renewal Timer</strong>:
+Arch Linux includes <code>certbot-renew.timer</code> out of the box. It checks certificate expiration twice a day and automatically renews within 30 days of expiry:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo systemctl <span class="nb">enable</span> --now certbot-renew.timer
+</span></span><span class="line"><span class="cl">sudo systemctl list-timers <span class="p">|</span> grep certbot
+</span></span></code></pre></div><h3 id="44-configuring-lighttpd-fallback-site" >
+<div>
+    <a href="#44-configuring-lighttpd-fallback-site">
+        ##
+    </a>
+    4.4 Configuring lighttpd Fallback Site
+</div>
+</h3>
+<ol>
+<li>
+<p><strong>Place Static Web Content</strong>:
+Add a standard static HTML template into <code>/srv/http/disguise/</code> (ensure <code>index.html</code> exists):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo chown -R http:http /srv/http/disguise
+</span></span><span class="line"><span class="cl">sudo chmod -R <span class="m">755</span> /srv/http/disguise
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Configure <code>/etc/lighttpd/lighttpd.conf</code></strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo nano /etc/lighttpd/lighttpd.conf
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-lighttpd" data-lang="lighttpd"><span class="line"><span class="cl"><span class="k">server.modules</span> <span class="o">=</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;mod_openssl&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;mod_redirect&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;mod_setenv&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;mod_access&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">server.username</span>      <span class="o">=</span> <span class="s2">&#34;http&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="k">server.groupname</span>     <span class="o">=</span> <span class="s2">&#34;http&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="k">server.document-root</span> <span class="o">=</span> <span class="s2">&#34;/srv/http/disguise&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="k">server.pid-file</span>      <span class="o">=</span> <span class="s2">&#34;/run/lighttpd.pid&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="k">server.errorlog</span>      <span class="o">=</span> <span class="s2">&#34;/var/log/lighttpd/error.log&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Disguise server signature
+</span></span></span><span class="line"><span class="cl"><span class="k">server.tag</span>           <span class="o">=</span> <span class="s2">&#34;nginx&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">mimetype.assign</span> <span class="o">=</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;.html&#34;</span> <span class="o">=&gt;</span> <span class="s2">&#34;text/html; charset=utf-8&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;.htm&#34;</span>  <span class="o">=&gt;</span> <span class="s2">&#34;text/html; charset=utf-8&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;.css&#34;</span>  <span class="o">=&gt;</span> <span class="s2">&#34;text/css; charset=utf-8&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;.js&#34;</span>   <span class="o">=&gt;</span> <span class="s2">&#34;application/javascript; charset=utf-8&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;.json&#34;</span> <span class="o">=&gt;</span> <span class="s2">&#34;application/json; charset=utf-8&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;.png&#34;</span>  <span class="o">=&gt;</span> <span class="s2">&#34;image/png&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;.jpg&#34;</span>  <span class="o">=&gt;</span> <span class="s2">&#34;image/jpeg&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;.svg&#34;</span>  <span class="o">=&gt;</span> <span class="s2">&#34;image/svg+xml&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;.ico&#34;</span>  <span class="o">=&gt;</span> <span class="s2">&#34;image/x-icon&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;.txt&#34;</span>  <span class="o">=&gt;</span> <span class="s2">&#34;text/plain; charset=utf-8&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">index-file.names</span> <span class="o">=</span> <span class="p">(</span> <span class="s2">&#34;index.html&#34;</span><span class="p">,</span> <span class="s2">&#34;index.htm&#34;</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Redirect HTTP (port 80) to HTTPS
+</span></span></span><span class="line"><span class="cl"><span class="k">server.port</span> <span class="o">=</span> <span class="m">80</span>
+</span></span><span class="line"><span class="cl"><span class="nb">$HTTP</span><span class="p">[</span><span class="s2">&#34;scheme&#34;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&#34;http&#34;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">url.redirect-code</span> <span class="o">=</span> <span class="m">301</span>
+</span></span><span class="line"><span class="cl">    <span class="k">url.redirect</span> <span class="o">=</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">&#34;&#34;</span> <span class="o">=&gt;</span> <span class="s2">&#34;https://${url.authority}${url.path}${qsa}&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Secure HTTPS configuration on port 443
+</span></span></span><span class="line"><span class="cl"><span class="nb">$SERVER</span><span class="p">[</span><span class="s2">&#34;socket&#34;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&#34;:443&#34;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">ssl.engine</span>  <span class="o">=</span> <span class="s2">&#34;enable&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">ssl.pemfile</span> <span class="o">=</span> <span class="s2">&#34;/etc/ssl/mihomo/fullchain.pem&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">ssl.privkey</span> <span class="o">=</span> <span class="s2">&#34;/etc/ssl/mihomo/privkey.pem&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1"># Enforce TLS 1.2+ with modern cipher suites
+</span></span></span><span class="line"><span class="cl">    <span class="k">ssl.openssl.ssl-conf-cmd</span> <span class="o">=</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">&#34;MinProtocol&#34;</span> <span class="o">=&gt;</span> <span class="s2">&#34;TLSv1.2&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">&#34;Options&#34;</span>     <span class="o">=&gt;</span> <span class="s2">&#34;-ServerPreference&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">&#34;CipherString&#34;</span> <span class="o">=&gt;</span> <span class="s2">&#34;ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1"># Security response headers (A+ rating)
+</span></span></span><span class="line"><span class="cl">    <span class="k">setenv.add-response-header</span> <span class="o">=</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">&#34;Strict-Transport-Security&#34;</span> <span class="o">=&gt;</span> <span class="s2">&#34;max-age=31536000; includeSubDomains; preload&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">&#34;X-Content-Type-Options&#34;</span>    <span class="o">=&gt;</span> <span class="s2">&#34;nosniff&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">&#34;X-Frame-Options&#34;</span>           <span class="o">=&gt;</span> <span class="s2">&#34;DENY&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">&#34;X-XSS-Protection&#34;</span>          <span class="o">=&gt;</span> <span class="s2">&#34;1; mode=block&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">&#34;Content-Security-Policy&#34;</span>   <span class="o">=&gt;</span> <span class="s2">&#34;default-src &#39;self&#39;; frame-ancestors &#39;none&#39;; upgrade-insecure-requests&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">&#34;Referrer-Policy&#34;</span>           <span class="o">=&gt;</span> <span class="s2">&#34;strict-origin-when-cross-origin&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">&#34;Permissions-Policy&#34;</span>        <span class="o">=&gt;</span> <span class="s2">&#34;interest-cohort=()&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1"># Virtual host binding
+</span></span></span><span class="line"><span class="cl">    <span class="nb">$HTTP</span><span class="p">[</span><span class="s2">&#34;host&#34;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&#34;&lt;YOUR_DOMAIN&gt;&#34;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">server.document-root</span> <span class="o">=</span> <span class="s2">&#34;/srv/http/disguise&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1"># Block raw IP or unauthorized host probes
+</span></span></span><span class="line"><span class="cl">    <span class="nb">$HTTP</span><span class="p">[</span><span class="s2">&#34;host&#34;</span><span class="p">]</span> <span class="err">!</span><span class="o">=</span> <span class="s2">&#34;&lt;YOUR_DOMAIN&gt;&#34;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">url.access-deny</span> <span class="o">=</span> <span class="p">(</span> <span class="s2">&#34;&#34;</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Hosts Resolution &amp; Service Activation</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo chown root:root /etc/lighttpd/lighttpd.conf
+</span></span><span class="line"><span class="cl">sudo chmod <span class="m">644</span> /etc/lighttpd/lighttpd.conf
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Ensure local masquerade requests resolve to 127.0.0.1</span>
+</span></span><span class="line"><span class="cl"><span class="nb">echo</span> <span class="s2">&#34;127.0.0.1 &lt;YOUR_DOMAIN&gt;&#34;</span> <span class="p">|</span> sudo tee -a /etc/hosts
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Verify syntax and start service</span>
+</span></span><span class="line"><span class="cl">sudo lighttpd -tt -f /etc/lighttpd/lighttpd.conf
+</span></span><span class="line"><span class="cl">sudo systemctl <span class="nb">enable</span> --now lighttpd
+</span></span></code></pre></div></li>
+</ol>
+<hr>
+<h2 id="step-5-installing-the-mihomo-core-binary-02-install-mihomosh" >
+<div>
+    <a href="#step-5-installing-the-mihomo-core-binary-02-install-mihomosh">
+        #
+    </a>
+    Step 5: Installing the mihomo Core Binary (<code>02-install-mihomo.sh</code>)
+</div>
+</h2>
+<p>Create an architecture-adaptive installation script <code>02-install-mihomo.sh</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">cat <span class="s">&lt;&lt; &#39;EOF&#39; &gt; 02-install-mihomo.sh
+</span></span></span><span class="line"><span class="cl"><span class="s">#!/usr/bin/env bash
+</span></span></span><span class="line"><span class="cl"><span class="s">set -euo pipefail
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">if [ &#34;$(id -u)&#34; -ne 0 ]; then
+</span></span></span><span class="line"><span class="cl"><span class="s">  echo &#34;Error: Must run as root: sudo bash 02-install-mihomo.sh&#34; &gt;&amp;2
+</span></span></span><span class="line"><span class="cl"><span class="s">  exit 1
+</span></span></span><span class="line"><span class="cl"><span class="s">fi
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">ARCH=&#34;$(uname -m)&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">case &#34;$ARCH&#34; in
+</span></span></span><span class="line"><span class="cl"><span class="s">  x86_64)  TARGET_ARCH=&#34;linux-amd64-compatible&#34; ;;
+</span></span></span><span class="line"><span class="cl"><span class="s">  aarch64) TARGET_ARCH=&#34;linux-arm64&#34; ;;
+</span></span></span><span class="line"><span class="cl"><span class="s">  *)       echo &#34;Unsupported architecture: $ARCH&#34; &gt;&amp;2; exit 1 ;;
+</span></span></span><span class="line"><span class="cl"><span class="s">esac
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">echo &#34;&gt;&gt; Fetching latest mihomo release tag...&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">LATEST_TAG=$(curl -sSL &#34;https://api.github.com/repos/MetaCubeX/mihomo/releases/latest&#34; | grep &#39;&#34;tag_name&#34;:&#39; | head -n 1 | cut -d &#39;&#34;&#39; -f 4)
+</span></span></span><span class="line"><span class="cl"><span class="s">DOWNLOAD_URL=&#34;https://github.com/MetaCubeX/mihomo/releases/download/${LATEST_TAG}/mihomo-${TARGET_ARCH}-${LATEST_TAG}.gz&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">TMP_DIR=&#34;$(mktemp -d)&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">trap &#39;rm -rf &#34;$TMP_DIR&#34;&#39; EXIT
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">echo &#34;&gt;&gt; Downloading mihomo (${LATEST_TAG} / ${TARGET_ARCH})...&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">curl -sSL -o &#34;$TMP_DIR/mihomo.gz&#34; &#34;$DOWNLOAD_URL&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">echo &#34;&gt;&gt; Extracting and installing to /usr/local/bin/mihomo ...&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">gzip -dc &#34;$TMP_DIR/mihomo.gz&#34; &gt; &#34;$TMP_DIR/mihomo&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">install -m 755 &#34;$TMP_DIR/mihomo&#34; /usr/local/bin/mihomo
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">/usr/local/bin/mihomo -v
+</span></span></span><span class="line"><span class="cl"><span class="s">echo &#34;&gt;&gt; Installation successful.&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">EOF</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">sudo bash 02-install-mihomo.sh
+</span></span><span class="line"><span class="cl">rm -f 02-install-mihomo.sh
+</span></span></code></pre></div><hr>
+<h2 id="step-6-generating-ech-keypair--launching-the-server-daemon" >
+<div>
+    <a href="#step-6-generating-ech-keypair--launching-the-server-daemon">
+        #
+    </a>
+    Step 6: Generating ECH Keypair &amp; Launching the Server Daemon
+</div>
+</h2>
+<h3 id="61-generating-ech-keypair" >
+<div>
+    <a href="#61-generating-ech-keypair">
+        ##
+    </a>
+    6.1 Generating ECH Keypair
+</div>
+</h3>
+<p>Use an unassociated high-reputation domain (such as <code>&lt;OUTER_ECH_DOMAIN&gt;</code>, e.g., <code>cloudflare.com</code>) as the outer SNI shield:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mihomo generate ech-keypair &lt;OUTER_ECH_DOMAIN&gt;
+</span></span></code></pre></div><p><strong>Example Output</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">Config: &lt;YOUR_ECH_CONFIG_BASE64&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Key: 
+</span></span><span class="line"><span class="cl">-----BEGIN ECH KEYS-----
+</span></span><span class="line"><span class="cl">&lt;YOUR_ECH_PRIVATE_KEY_LINES&gt;
+</span></span><span class="line"><span class="cl">-----END ECH KEYS-----
+</span></span></code></pre></div><ul>
+<li><strong>Config</strong>: Public key string used in client configuration.</li>
+<li><strong>Key</strong>: Private key block used in the server configuration.</li>
+</ul>
+<h3 id="62-hardened-systemd-service-unit" >
+<div>
+    <a href="#62-hardened-systemd-service-unit">
+        ##
+    </a>
+    6.2 Hardened Systemd Service Unit
+</div>
+</h3>
+<p>Create <code>/etc/systemd/system/mihomo.service</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-ini" data-lang="ini"><span class="line"><span class="cl"><span class="k">[Unit]</span>
+</span></span><span class="line"><span class="cl"><span class="na">Description</span><span class="o">=</span><span class="s">mihomo Server Daemon (Hysteria2 Listener, Least Privilege)</span>
+</span></span><span class="line"><span class="cl"><span class="na">After</span><span class="o">=</span><span class="s">network.target network-online.target</span>
+</span></span><span class="line"><span class="cl"><span class="na">Wants</span><span class="o">=</span><span class="s">network-online.target</span>
+</span></span><span class="line"><span class="cl"><span class="na">StartLimitIntervalSec</span><span class="o">=</span><span class="s">120s</span>
+</span></span><span class="line"><span class="cl"><span class="na">StartLimitBurst</span><span class="o">=</span><span class="s">5</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">[Service]</span>
+</span></span><span class="line"><span class="cl"><span class="na">Type</span><span class="o">=</span><span class="s">simple</span>
+</span></span><span class="line"><span class="cl"><span class="na">User</span><span class="o">=</span><span class="s">mihomo</span>
+</span></span><span class="line"><span class="cl"><span class="na">Group</span><span class="o">=</span><span class="s">mihomo</span>
+</span></span><span class="line"><span class="cl"><span class="na">SupplementaryGroups</span><span class="o">=</span><span class="s">ssl-cert</span>
+</span></span><span class="line"><span class="cl"><span class="na">Environment</span><span class="o">=</span><span class="s">&#34;SAFE_PATHS=/etc/ssl/mihomo:/etc/mihomo&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Drop all high-risk capabilities; grant only port binding capability</span>
+</span></span><span class="line"><span class="cl"><span class="na">CapabilityBoundingSet</span><span class="o">=</span><span class="s">CAP_NET_BIND_SERVICE</span>
+</span></span><span class="line"><span class="cl"><span class="na">AmbientCapabilities</span><span class="o">=</span><span class="s">CAP_NET_BIND_SERVICE</span>
+</span></span><span class="line"><span class="cl"><span class="na">NoNewPrivileges</span><span class="o">=</span><span class="s">true</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Filesystem and process isolation</span>
+</span></span><span class="line"><span class="cl"><span class="na">ProtectSystem</span><span class="o">=</span><span class="s">strict</span>
+</span></span><span class="line"><span class="cl"><span class="na">ProtectHome</span><span class="o">=</span><span class="s">true</span>
+</span></span><span class="line"><span class="cl"><span class="na">PrivateTmp</span><span class="o">=</span><span class="s">true</span>
+</span></span><span class="line"><span class="cl"><span class="na">ProtectKernelTunables</span><span class="o">=</span><span class="s">true</span>
+</span></span><span class="line"><span class="cl"><span class="na">ProtectKernelModules</span><span class="o">=</span><span class="s">true</span>
+</span></span><span class="line"><span class="cl"><span class="na">ProtectControlGroups</span><span class="o">=</span><span class="s">true</span>
+</span></span><span class="line"><span class="cl"><span class="na">RestrictAddressFamilies</span><span class="o">=</span><span class="s">AF_INET AF_INET6 AF_NETLINK AF_UNIX</span>
+</span></span><span class="line"><span class="cl"><span class="na">LockPersonality</span><span class="o">=</span><span class="s">true</span>
+</span></span><span class="line"><span class="cl"><span class="na">PrivateDevices</span><span class="o">=</span><span class="s">true</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># System call filtering (Seccomp)</span>
+</span></span><span class="line"><span class="cl"><span class="na">SystemCallFilter</span><span class="o">=</span><span class="s">@system-service</span>
+</span></span><span class="line"><span class="cl"><span class="na">SystemCallErrorNumber</span><span class="o">=</span><span class="s">EPERM</span>
+</span></span><span class="line"><span class="cl"><span class="na">SystemCallArchitectures</span><span class="o">=</span><span class="s">native</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Working directory and file access restrictions</span>
+</span></span><span class="line"><span class="cl"><span class="na">WorkingDirectory</span><span class="o">=</span><span class="s">/var/lib/mihomo</span>
+</span></span><span class="line"><span class="cl"><span class="na">StateDirectory</span><span class="o">=</span><span class="s">mihomo</span>
+</span></span><span class="line"><span class="cl"><span class="na">ReadWritePaths</span><span class="o">=</span><span class="s">/var/lib/mihomo</span>
+</span></span><span class="line"><span class="cl"><span class="na">ReadOnlyPaths</span><span class="o">=</span><span class="s">/etc/mihomo /etc/ssl/mihomo</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="na">LimitNPROC</span><span class="o">=</span><span class="s">500</span>
+</span></span><span class="line"><span class="cl"><span class="na">LimitNOFILE</span><span class="o">=</span><span class="s">1000000</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="na">Restart</span><span class="o">=</span><span class="s">on-failure</span>
+</span></span><span class="line"><span class="cl"><span class="na">RestartSec</span><span class="o">=</span><span class="s">5s</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="na">ExecStartPre</span><span class="o">=</span><span class="s">/usr/bin/sleep 1s</span>
+</span></span><span class="line"><span class="cl"><span class="na">ExecStart</span><span class="o">=</span><span class="s">/usr/local/bin/mihomo -d /var/lib/mihomo -f /etc/mihomo/config.yaml</span>
+</span></span><span class="line"><span class="cl"><span class="na">ExecReload</span><span class="o">=</span><span class="s">/bin/kill -HUP $MAINPID</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">[Install]</span>
+</span></span><span class="line"><span class="cl"><span class="na">WantedBy</span><span class="o">=</span><span class="s">multi-user.target</span>
+</span></span></code></pre></div><p>Reload systemd:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo chown root:root /etc/systemd/system/mihomo.service
+</span></span><span class="line"><span class="cl">sudo chmod <span class="m">644</span> /etc/systemd/system/mihomo.service
+</span></span><span class="line"><span class="cl">sudo systemctl daemon-reload
+</span></span></code></pre></div><h3 id="63-server-configuration-etcmihomoconfigyaml" >
+<div>
+    <a href="#63-server-configuration-etcmihomoconfigyaml">
+        ##
+    </a>
+    6.3 Server Configuration <code>/etc/mihomo/config.yaml</code>
+</div>
+</h3>
+<p>Create <code>/etc/mihomo/config.yaml</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">log-level</span><span class="p">:</span><span class="w"> </span><span class="l">warning</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">ipv6</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">find-process-mode</span><span class="p">:</span><span class="w"> </span><span class="kc">off</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">external-controller</span><span class="p">:</span><span class="w"> </span><span class="m">127.0.0.1</span><span class="p">:</span><span class="m">9090</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">secret</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;YOUR_CONTROLLER_SECRET&gt;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">profile</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">store-selected</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">store-fake-ip</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">listeners</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">hy2-in</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">hysteria2</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c"># Strictly listen on loopback interface</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;MIHOMO_LOCAL_PORT&gt;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">listen</span><span class="p">:</span><span class="w"> </span><span class="m">127.0.0.1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c"># Authentication credentials</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">users</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">hy2-user</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;&lt;YOUR_STRONG_PASSWORD&gt;&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">up</span><span class="p">:</span><span class="w"> </span><span class="m">100</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">down</span><span class="p">:</span><span class="w"> </span><span class="m">100</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">ignore-client-bandwidth</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c"># Fallback to local static website</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">masquerade</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;https://&lt;YOUR_DOMAIN&gt;&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">alpn</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">h3</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">certificate</span><span class="p">:</span><span class="w"> </span><span class="l">/etc/ssl/mihomo/fullchain.pem</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">private-key</span><span class="p">:</span><span class="w"> </span><span class="l">/etc/ssl/mihomo/privkey.pem</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c"># Paste the ECH private key block generated in Step 6.1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">ech-key</span><span class="p">:</span><span class="w"> </span><span class="p">|</span><span class="sd">
+</span></span></span><span class="line"><span class="cl"><span class="sd">      -----BEGIN ECH KEYS-----
+</span></span></span><span class="line"><span class="cl"><span class="sd">      &lt;YOUR_ECH_PRIVATE_KEY&gt;
+</span></span></span><span class="line"><span class="cl"><span class="sd">      -----END ECH KEYS-----</span><span class="w">
+</span></span></span></code></pre></div><p>Set permissions and launch:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo chown root:mihomo /etc/mihomo/config.yaml
+</span></span><span class="line"><span class="cl">sudo chmod <span class="m">640</span> /etc/mihomo/config.yaml
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Test configuration syntax</span>
+</span></span><span class="line"><span class="cl">sudo -u mihomo /usr/local/bin/mihomo -t -d /var/lib/mihomo -f /etc/mihomo/config.yaml
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Start and enable the service</span>
+</span></span><span class="line"><span class="cl">sudo systemctl <span class="nb">enable</span> --now mihomo
+</span></span><span class="line"><span class="cl">sudo systemctl status mihomo
+</span></span></code></pre></div><hr>
+<h2 id="step-7-cross-platform-client-deployment-guide-desktop--mobile" >
+<div>
+    <a href="#step-7-cross-platform-client-deployment-guide-desktop--mobile">
+        #
+    </a>
+    Step 7: Cross-Platform Client Deployment Guide (Desktop &amp; Mobile)
+</div>
+</h2>
+<p>This setup tailors two separate, fully audited configuration profiles according to the differing network stacks and power-consumption characteristics of desktop and mobile platforms:</p>
+<ul>
+<li><strong>Desktop Profile (<code>mihomo-desktop.yaml</code>)</strong>: Enables native transparent TUN routing, TCP concurrency, and standard keep-alive timeouts. Because all network traffic is routed through the virtual TUN interface, domestic traffic is cleanly and comprehensively resolved by <code>GEOSITE,CN</code> and <code>GEOIP,CN</code>.</li>
+<li><strong>Mobile Profile (<code>mihomo-mobile.yaml</code>)</strong>: <strong>Omits the <code>tun</code> section entirely</strong> (leaving virtual interface management to the mobile operating system&rsquo;s native <code>VpnService</code> to prevent double-TUN battery drain), enables <code>quic-go-disable-gso: true</code> to bypass cellular base station UDP fragmentation flaws, and utilizes short keep-alive heartbeats to prevent idle drops. Furthermore, it incorporates explicit <code>DOMAIN-SUFFIX</code> direct routing rules for high-frequency domestic apps (such as Bilibili, WeChat, QQ) to prevent private in-app HTTPDNS implementations from bypassing system DNS and triggering account fraud-prevention flags.</li>
+</ul>
+<h3 id="71-linux-desktop-deployment--full-configuration-tun-transparent-mode" >
+<div>
+    <a href="#71-linux-desktop-deployment--full-configuration-tun-transparent-mode">
+        ##
+    </a>
+    7.1 Linux Desktop Deployment &amp; Full Configuration (TUN Transparent Mode)
+</div>
+</h3>
+<p>On the client Linux machine, execute the environment initialization:</p>
+<ol>
+<li>
+<p><strong>Setup TUN Permissions (<code>setup-client.sh</code>)</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo pacman -S --needed iproute2 curl openssl ca-certificates
+</span></span><span class="line"><span class="cl">sudo useradd -r -s /usr/bin/nologin -M mihomo <span class="o">||</span> <span class="nb">true</span>
+</span></span><span class="line"><span class="cl">sudo mkdir -p /etc/mihomo /var/lib/mihomo
+</span></span><span class="line"><span class="cl">sudo chown root:mihomo /etc/mihomo <span class="o">&amp;&amp;</span> sudo chmod <span class="m">750</span> /etc/mihomo
+</span></span><span class="line"><span class="cl">sudo chown mihomo:mihomo /var/lib/mihomo <span class="o">&amp;&amp;</span> sudo chmod <span class="m">750</span> /var/lib/mihomo
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Grant restricted mihomo user permissions to operate TUN devices</span>
+</span></span><span class="line"><span class="cl">sudo tee /etc/udev/rules.d/90-mihomo-tun.rules <span class="s">&lt;&lt; &#39;EOF&#39;
+</span></span></span><span class="line"><span class="cl"><span class="s">KERNEL==&#34;tun&#34;, GROUP=&#34;mihomo&#34;, MODE=&#34;0660&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">EOF</span>
+</span></span><span class="line"><span class="cl">sudo udevadm control --reload-rules <span class="o">&amp;&amp;</span> sudo udevadm trigger --name-match<span class="o">=</span>tun
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Install mihomo Core Binary</strong>:
+Run the same <code>02-install-mihomo.sh</code> script as on the server to install the binary to <code>/usr/local/bin/mihomo</code>.</p>
+</li>
+<li>
+<p><strong>Client Systemd Service Unit (Grants CAP_NET_ADMIN for TUN)</strong>:
+Create <code>/etc/systemd/system/mihomo.service</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-ini" data-lang="ini"><span class="line"><span class="cl"><span class="k">[Unit]</span>
+</span></span><span class="line"><span class="cl"><span class="na">Description</span><span class="o">=</span><span class="s">mihomo Client Daemon (TUN Mode)</span>
+</span></span><span class="line"><span class="cl"><span class="na">After</span><span class="o">=</span><span class="s">network.target network-online.target</span>
+</span></span><span class="line"><span class="cl"><span class="na">Wants</span><span class="o">=</span><span class="s">network-online.target</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">[Service]</span>
+</span></span><span class="line"><span class="cl"><span class="na">Type</span><span class="o">=</span><span class="s">simple</span>
+</span></span><span class="line"><span class="cl"><span class="na">User</span><span class="o">=</span><span class="s">mihomo</span>
+</span></span><span class="line"><span class="cl"><span class="na">Group</span><span class="o">=</span><span class="s">mihomo</span>
+</span></span><span class="line"><span class="cl"><span class="na">CapabilityBoundingSet</span><span class="o">=</span><span class="s">CAP_NET_ADMIN CAP_NET_BIND_SERVICE</span>
+</span></span><span class="line"><span class="cl"><span class="na">AmbientCapabilities</span><span class="o">=</span><span class="s">CAP_NET_ADMIN CAP_NET_BIND_SERVICE</span>
+</span></span><span class="line"><span class="cl"><span class="na">NoNewPrivileges</span><span class="o">=</span><span class="s">true</span>
+</span></span><span class="line"><span class="cl"><span class="na">ProtectSystem</span><span class="o">=</span><span class="s">strict</span>
+</span></span><span class="line"><span class="cl"><span class="na">ProtectHome</span><span class="o">=</span><span class="s">true</span>
+</span></span><span class="line"><span class="cl"><span class="na">PrivateTmp</span><span class="o">=</span><span class="s">true</span>
+</span></span><span class="line"><span class="cl"><span class="na">WorkingDirectory</span><span class="o">=</span><span class="s">/var/lib/mihomo</span>
+</span></span><span class="line"><span class="cl"><span class="na">StateDirectory</span><span class="o">=</span><span class="s">mihomo</span>
+</span></span><span class="line"><span class="cl"><span class="na">ReadWritePaths</span><span class="o">=</span><span class="s">/var/lib/mihomo</span>
+</span></span><span class="line"><span class="cl"><span class="na">ReadOnlyPaths</span><span class="o">=</span><span class="s">/etc/mihomo</span>
+</span></span><span class="line"><span class="cl"><span class="na">ExecStart</span><span class="o">=</span><span class="s">/usr/local/bin/mihomo -d /var/lib/mihomo -f /etc/mihomo/config.yaml</span>
+</span></span><span class="line"><span class="cl"><span class="na">Restart</span><span class="o">=</span><span class="s">on-failure</span>
+</span></span><span class="line"><span class="cl"><span class="na">RestartSec</span><span class="o">=</span><span class="s">5s</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">[Install]</span>
+</span></span><span class="line"><span class="cl"><span class="na">WantedBy</span><span class="o">=</span><span class="s">multi-user.target</span>
+</span></span></code></pre></div><p>Reload systemd: <code>sudo systemctl daemon-reload</code>.</p>
+</li>
+<li>
+<p><strong>Desktop Full Profile (<code>mihomo-desktop.yaml</code>)</strong>:
+Save the following complete configuration to <code>/etc/mihomo/config.yaml</code>:</p>
+</li>
+</ol>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">mixed-port</span><span class="p">:</span><span class="w"> </span><span class="m">7890</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">allow-lan</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">bind-address</span><span class="p">:</span><span class="w"> </span><span class="m">127.0.0.1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l">rule</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">log-level</span><span class="p">:</span><span class="w"> </span><span class="l">warning</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">ipv6</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">unified-delay</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">tcp-concurrent</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">find-process-mode</span><span class="p">:</span><span class="w"> </span><span class="kc">off</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">keep-alive-interval</span><span class="p">:</span><span class="w"> </span><span class="m">30</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">keep-alive-idle</span><span class="p">:</span><span class="w"> </span><span class="m">600</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">disable-keep-alive</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">geodata-mode</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">geo-auto-update</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">geo-update-interval</span><span class="p">:</span><span class="w"> </span><span class="m">24</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">geox-url</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">geoip</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">geosite</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">mmdb</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">asn</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/GeoLite2-ASN.mmdb&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">profile</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">store-selected</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">store-fake-ip</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">experimental</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">quic-go-disable-gso</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">quic-go-disable-ecn</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">dialer-ip4p-convert</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># Static hosts mapping for DoH endpoints: Bypasses bootstrap queries &amp; prevents DNS poisoning</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">&#39;dns.quad9.net&#39;</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">9.9.9.9</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">149.112.112.112</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">&#39;protective.joindns4.eu&#39;</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">86.54.11.1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">86.54.11.201</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># ---- TUN Mode ----</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">tun</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">enable</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">stack</span><span class="p">:</span><span class="w"> </span><span class="l">mixed</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">dns-hijack</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="s2">&#34;any:53&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">auto-route</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">auto-detect-interface</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">strict-route</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">route-exclude-address</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">10.0.0.0</span><span class="l">/8</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">172.16.0.0</span><span class="l">/12</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">192.168.0.0</span><span class="l">/16</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">127.0.0.0</span><span class="l">/8</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">169.254.0.0</span><span class="l">/16</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">224.0.0.0</span><span class="l">/4</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">240.0.0.0</span><span class="l">/4</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">mtu</span><span class="p">:</span><span class="w"> </span><span class="m">1500</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># ---- DNS ----</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">dns</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">enable</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">cache-algorithm</span><span class="p">:</span><span class="w"> </span><span class="l">arc</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">prefer-h3</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">use-hosts</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">use-system-hosts</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">respect-rules</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">listen</span><span class="p">:</span><span class="w"> </span><span class="m">127.0.0.1</span><span class="p">:</span><span class="m">1053</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">ipv6</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">default-nameserver</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">223.5.5.5</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">119.29.29.29</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">enhanced-mode</span><span class="p">:</span><span class="w"> </span><span class="l">fake-ip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">fake-ip-range</span><span class="p">:</span><span class="w"> </span><span class="m">198.18.0.1</span><span class="l">/16</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">fake-ip-filter-mode</span><span class="p">:</span><span class="w"> </span><span class="l">rule</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">fake-ip-filter</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">GEOSITE,CN,real-ip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">GEOSITE,private,real-ip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">GEOSITE,apple,real-ip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">GEOSITE,onedrive,real-ip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">GEOSITE,category-ntp,real-ip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">GEOSITE,connectivity-check,real-ip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">DOMAIN,&lt;YOUR_DOMAIN&gt;,real-ip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">MATCH,fake-ip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">nameserver-policy</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="s2">&#34;geosite:cn,private,apple,onedrive,microsoft@cn&#34;</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">https://dns.alidns.com/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">https://doh.pub/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="s2">&#34;geosite:google,youtube,telegram,gfw,geolocation-!cn&#34;</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">https://dns.quad9.net/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">https://protective.joindns4.eu/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">nameserver</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">https://dns.quad9.net/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">https://protective.joindns4.eu/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">fallback</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">https://protective.joindns4.eu/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">https://dns.quad9.net/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">fallback-filter</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">geoip</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">geoip-code</span><span class="p">:</span><span class="w"> </span><span class="l">CN</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">geosite</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">gfw</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">ipcidr</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="m">240.0.0.0</span><span class="l">/4</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="m">0.0.0.0</span><span class="l">/32</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="m">127.0.0.1</span><span class="l">/32</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="m">100.64.0.0</span><span class="l">/10</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Node domain resolution: Domestic DoH (encrypted transport against inspection)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">proxy-server-nameserver</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">https://dns.alidns.com/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">https://doh.pub/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">direct-nameserver</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">https://dns.alidns.com/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">https://doh.pub/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">direct-nameserver-follow-policy</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># ---- Proxy Node ----</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">proxies</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">HY2-Port-Hopping</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">hysteria2</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">server</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;YOUR_DOMAIN&gt;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">ports</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;HOP_PORT_START&gt;-&lt;HOP_PORT_END&gt;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">hop-interval</span><span class="p">:</span><span class="w"> </span><span class="m">30</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;&lt;YOUR_STRONG_PASSWORD&gt;&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">up</span><span class="p">:</span><span class="w"> </span><span class="m">200</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">down</span><span class="p">:</span><span class="w"> </span><span class="m">100</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">sni</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;YOUR_DOMAIN&gt;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">skip-cert-verify</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">alpn</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">h3</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">ech-opts</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">enable</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">config</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;&lt;YOUR_ECH_CONFIG_BASE64&gt;&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># ---- Proxy Groups ----</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">proxy-groups</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">代理</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">select</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">proxies</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">自动选择</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">HY2-Port-Hopping</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">自动选择</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">url-test</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">proxies</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">HY2-Port-Hopping</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l">https://www.gstatic.com/generate_204</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="m">300</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">tolerance</span><span class="p">:</span><span class="w"> </span><span class="m">50</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">rules</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Ad blocking</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,category-ads-all,REJECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Direct connection to node domain (prevents loops)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">DOMAIN,&lt;YOUR_DOMAIN&gt;,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">IP-CIDR,192.168.0.0/16,DIRECT,no-resolve</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">IP-CIDR,127.0.0.0/8,DIRECT,no-resolve</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOIP,private,DIRECT,no-resolve</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,private,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,google,代理</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,youtube,代理</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,telegram,代理</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,github,代理</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,openai,代理</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,anthropic,代理</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">IP-CIDR,160.79.104.0/21,代理,no-resolve</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOIP,telegram,代理</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,microsoft@cn,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,apple-cn,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,steam@cn,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,category-games@cn,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"> 
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,CN,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOIP,CN,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,geolocation-!cn,代理</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">MATCH,代理</span><span class="w">
+</span></span></span></code></pre></div><p>Enable and verify:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo chown root:mihomo /etc/mihomo/config.yaml
+</span></span><span class="line"><span class="cl">sudo chmod <span class="m">640</span> /etc/mihomo/config.yaml
+</span></span><span class="line"><span class="cl">sudo systemctl <span class="nb">enable</span> --now mihomo
+</span></span><span class="line"><span class="cl">sudo systemctl status mihomo
+</span></span></code></pre></div><hr>
+<h3 id="72-mobile-full-profile-mihomo-mobileyaml--android--ios-power-optimized" >
+<div>
+    <a href="#72-mobile-full-profile-mihomo-mobileyaml--android--ios-power-optimized">
+        ##
+    </a>
+    7.2 Mobile Full Profile (<code>mihomo-mobile.yaml</code> / Android &amp; iOS Power-Optimized)
+</div>
+</h3>
+<p>For mobile clients (Clash Meta for Android, Flclash, Sing-box, Loon, Shadowrocket, etc.), save or import the following complete configuration:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">mixed-port</span><span class="p">:</span><span class="w"> </span><span class="m">7890</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">allow-lan</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">bind-address</span><span class="p">:</span><span class="w"> </span><span class="m">127.0.0.1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l">rule</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">log-level</span><span class="p">:</span><span class="w"> </span><span class="l">warning</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">ipv6</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">unified-delay</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">tcp-concurrent</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">find-process-mode</span><span class="p">:</span><span class="w"> </span><span class="kc">off</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># Mobile-specific keep-alive: Prevents carrier mobile base stations from evicting NAT states</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">keep-alive-interval</span><span class="p">:</span><span class="w"> </span><span class="m">25</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">keep-alive-idle</span><span class="p">:</span><span class="w"> </span><span class="m">120</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">disable-keep-alive</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">geodata-mode</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">geo-auto-update</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">geo-update-interval</span><span class="p">:</span><span class="w"> </span><span class="m">24</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">geox-url</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">geoip</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">geosite</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">mmdb</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">asn</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/GeoLite2-ASN.mmdb&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">profile</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">store-selected</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">store-fake-ip</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">experimental</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Disabling GSO and ECN is strongly advised on cellular mobile networks</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">quic-go-disable-gso</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">quic-go-disable-ecn</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">dialer-ip4p-convert</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># Static hosts mapping for DoH endpoints: Bypasses bootstrap queries &amp; prevents DNS poisoning</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">hosts</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">&#39;dns.quad9.net&#39;</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">9.9.9.9</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">149.112.112.112</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">&#39;protective.joindns4.eu&#39;</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">86.54.11.1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">86.54.11.201</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># Note: Mobile configurations omit the &#39;tun:&#39; block entirely.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># The virtual network interface is delegated to the mobile OS VpnService.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># ---- DNS ----</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">dns</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">enable</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">cache-algorithm</span><span class="p">:</span><span class="w"> </span><span class="l">arc</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">prefer-h3</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">use-hosts</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">use-system-hosts</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">respect-rules</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">listen</span><span class="p">:</span><span class="w"> </span><span class="m">127.0.0.1</span><span class="p">:</span><span class="m">1053</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">ipv6</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">default-nameserver</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">223.5.5.5</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="m">119.29.29.29</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">enhanced-mode</span><span class="p">:</span><span class="w"> </span><span class="l">fake-ip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">fake-ip-range</span><span class="p">:</span><span class="w"> </span><span class="m">198.18.0.1</span><span class="l">/16</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">fake-ip-filter-mode</span><span class="p">:</span><span class="w"> </span><span class="l">rule</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">fake-ip-filter</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">GEOSITE,CN,real-ip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">GEOSITE,private,real-ip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">GEOSITE,apple,real-ip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">GEOSITE,onedrive,real-ip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">GEOSITE,category-ntp,real-ip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">GEOSITE,connectivity-check,real-ip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">DOMAIN,&lt;YOUR_DOMAIN&gt;,real-ip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">MATCH,fake-ip</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">nameserver-policy</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="s2">&#34;geosite:cn,private,apple,onedrive,microsoft@cn&#34;</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">https://dns.alidns.com/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">https://doh.pub/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="s2">&#34;geosite:google,youtube,telegram,gfw,geolocation-!cn&#34;</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">https://dns.quad9.net/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">https://protective.joindns4.eu/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">nameserver</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">https://dns.quad9.net/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">https://protective.joindns4.eu/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">fallback</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">https://protective.joindns4.eu/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">https://dns.quad9.net/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">fallback-filter</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">geoip</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">geoip-code</span><span class="p">:</span><span class="w"> </span><span class="l">CN</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">geosite</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">gfw</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">ipcidr</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="m">240.0.0.0</span><span class="l">/4</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="m">0.0.0.0</span><span class="l">/32</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="m">127.0.0.1</span><span class="l">/32</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="m">100.64.0.0</span><span class="l">/10</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">proxy-server-nameserver</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">https://dns.alidns.com/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">https://doh.pub/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">direct-nameserver</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">https://dns.alidns.com/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">https://doh.pub/dns-query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">direct-nameserver-follow-policy</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># ---- Proxy Node ----</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">proxies</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">HY2-Port-Hopping</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">hysteria2</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">server</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;YOUR_DOMAIN&gt;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">ports</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;HOP_PORT_START&gt;-&lt;HOP_PORT_END&gt;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">hop-interval</span><span class="p">:</span><span class="w"> </span><span class="m">30</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;&lt;YOUR_STRONG_PASSWORD&gt;&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">up</span><span class="p">:</span><span class="w"> </span><span class="m">100</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">down</span><span class="p">:</span><span class="w"> </span><span class="m">100</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">sni</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;YOUR_DOMAIN&gt;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">skip-cert-verify</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">alpn</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">h3</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">ech-opts</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">enable</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">config</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;&lt;YOUR_ECH_CONFIG_BASE64&gt;&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># ---- Proxy Groups ----</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">proxy-groups</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">代理</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">select</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">proxies</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">自动选择</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">HY2-Port-Hopping</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">自动选择</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">url-test</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">proxies</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">HY2-Port-Hopping</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l">https://www.gstatic.com/generate_204</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="m">300</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">tolerance</span><span class="p">:</span><span class="w"> </span><span class="m">50</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">rules</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Ad blocking</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,category-ads-all,REJECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Direct connection to node domain (prevents loops)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">DOMAIN,&lt;YOUR_DOMAIN&gt;,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">IP-CIDR,192.168.0.0/16,DIRECT,no-resolve</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">IP-CIDR,127.0.0.0/8,DIRECT,no-resolve</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOIP,private,DIRECT,no-resolve</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,private,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"> 
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,google,代理</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,youtube,代理</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,telegram,代理</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,github,代理</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,openai,代理</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,anthropic,代理</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">IP-CIDR,160.79.104.0/21,代理,no-resolve</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOIP,telegram,代理</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,microsoft@cn,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,apple-cn,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,steam@cn,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,category-games@cn,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,bilibili,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">DOMAIN-SUFFIX,bilibili.com,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">DOMAIN-SUFFIX,biliapi.net,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">DOMAIN-SUFFIX,hdslb.com,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">DOMAIN-SUFFIX,bilivideo.com,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">DOMAIN-SUFFIX,bilivideo.cn,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">DOMAIN-SUFFIX,acgvideo.com,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">DOMAIN-SUFFIX,qq.com,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">DOMAIN-SUFFIX,gtimg.cn,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">DOMAIN-SUFFIX,weixin.qq.com,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,CN,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOIP,CN,DIRECT</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">GEOSITE,geolocation-!cn,代理</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">MATCH,代理</span><span class="w">
+</span></span></span></code></pre></div><hr>
+<h3 id="73-windows--macos-gui-client-setup" >
+<div>
+    <a href="#73-windows--macos-gui-client-setup">
+        ##
+    </a>
+    7.3 Windows / macOS GUI Client Setup
+</div>
+</h3>
+<p>On Windows or macOS, graphical clients like <strong>Mihomo Party</strong>, <strong>Clash Verge Rev</strong>, or <strong>Flclash</strong> are recommended:</p>
+<ol>
+<li>Create a new local profile, copy and paste the complete content of <code>mihomo-desktop.yaml</code> above into it;</li>
+<li>Verify that <code>&lt;YOUR_DOMAIN&gt;</code>, <code>&lt;HOP_PORT_START&gt;-&lt;HOP_PORT_END&gt;</code>, <code>&lt;YOUR_STRONG_PASSWORD&gt;</code>, and <code>&lt;YOUR_ECH_CONFIG_BASE64&gt;</code> are appropriately filled in;</li>
+<li>Save and activate the profile, then toggle &ldquo;System Proxy&rdquo; or &ldquo;TUN Mode / Service Mode&rdquo; on the dashboard for system-wide routing.</li>
+</ol>
+<hr>
+<h2 id="step-8-verification--troubleshooting" >
+<div>
+    <a href="#step-8-verification--troubleshooting">
+        #
+    </a>
+    Step 8: Verification &amp; Troubleshooting
+</div>
+</h2>
+<h3 id="81-diagnostic-commands" >
+<div>
+    <a href="#81-diagnostic-commands">
+        ##
+    </a>
+    8.1 Diagnostic Commands
+</div>
+</h3>
+<p>Run the following checks on the server:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># 1. Verify nftables rules and NAT translations</span>
+</span></span><span class="line"><span class="cl">sudo nft list ruleset
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 2. Check local listening ports (verify 127.0.0.1 binding and web ports)</span>
+</span></span><span class="line"><span class="cl">sudo ss -tulnp <span class="p">|</span> grep -E <span class="s1">&#39;(&lt;MIHOMO_LOCAL_PORT&gt;|80|443|&lt;CUSTOM_SSH_PORT&gt;)&#39;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 3. Test the fallback website and SSL certificate</span>
+</span></span><span class="line"><span class="cl">curl -Iv https://&lt;YOUR_DOMAIN&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 4. Monitor live daemon logs</span>
+</span></span><span class="line"><span class="cl">sudo journalctl -u mihomo -f -n <span class="m">50</span> --no-pager
+</span></span></code></pre></div><h3 id="82-common-issues--resolutions" >
+<div>
+    <a href="#82-common-issues--resolutions">
+        ##
+    </a>
+    8.2 Common Issues &amp; Resolutions
+</div>
+</h3>
+<table>
+	<thead>
+			<tr>
+					<th>Symptom</th>
+					<th>Probable Cause</th>
+					<th>Solution</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Client times out; no handshake logs on server</td>
+					<td>Kernel drops cross-interface routing to 127.0.0.1</td>
+					<td>Check <code>sysctl net.ipv4.conf.all.route_localnet</code>; verify it is set to <code>1</code></td>
+			</tr>
+			<tr>
+					<td>Client times out; no handshake logs on server</td>
+					<td>Interface name mismatch</td>
+					<td>Confirm <code>WAN_IFACE</code> in <code>/etc/nftables.conf</code> exactly matches <code>ip -br link</code></td>
+			</tr>
+			<tr>
+					<td>SSH connection suddenly dropped or blocked</td>
+					<td>Triggered rate-limit trap</td>
+					<td>Over 4 connections/min triggers an auto-ban. Unban your IP: <code>sudo nft delete element inet filter scan_blacklist { &lt;YOUR_CLIENT_IP&gt; }</code></td>
+			</tr>
+			<tr>
+					<td>mihomo fails to start (permission denied on cert)</td>
+					<td>Incorrect key permissions or user groups</td>
+					<td>Ensure key permissions are <code>640 root:ssl-cert</code> and <code>mihomo</code> is in the <code>ssl-cert</code> group</td>
+			</tr>
+			<tr>
+					<td>Fallback site returns 403 Forbidden</td>
+					<td>Request missing matching Host header</td>
+					<td>Expected behavior; visiting via browser with the full domain name loads correctly</td>
+			</tr>
+	</tbody>
+</table>
+<hr>
+<h2 id="step-9-seamless-hot-upgrades-upgrade-mihomosh" >
+<div>
+    <a href="#step-9-seamless-hot-upgrades-upgrade-mihomosh">
+        #
+    </a>
+    Step 9: Seamless Hot Upgrades (<code>upgrade-mihomo.sh</code>)
+</div>
+</h2>
+<p>When new upstream versions are released, perform an in-place upgrade without downtime using this script:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">cat <span class="s">&lt;&lt; &#39;EOF&#39; &gt; upgrade-mihomo.sh
+</span></span></span><span class="line"><span class="cl"><span class="s">#!/usr/bin/env bash
+</span></span></span><span class="line"><span class="cl"><span class="s">set -euo pipefail
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">if [ &#34;$(id -u)&#34; -ne 0 ]; then
+</span></span></span><span class="line"><span class="cl"><span class="s">  echo &#34;Error: Must run as root: sudo bash upgrade-mihomo.sh&#34; &gt;&amp;2
+</span></span></span><span class="line"><span class="cl"><span class="s">  exit 1
+</span></span></span><span class="line"><span class="cl"><span class="s">fi
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">ARCH=&#34;$(uname -m)&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">case &#34;$ARCH&#34; in
+</span></span></span><span class="line"><span class="cl"><span class="s">  x86_64)  TARGET_ARCH=&#34;linux-amd64-compatible&#34; ;;
+</span></span></span><span class="line"><span class="cl"><span class="s">  aarch64) TARGET_ARCH=&#34;linux-arm64&#34; ;;
+</span></span></span><span class="line"><span class="cl"><span class="s">  *)       echo &#34;Unsupported architecture: $ARCH&#34; &gt;&amp;2; exit 1 ;;
+</span></span></span><span class="line"><span class="cl"><span class="s">esac
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">LATEST_TAG=$(curl -sSL &#34;https://api.github.com/repos/MetaCubeX/mihomo/releases/latest&#34; | grep &#39;&#34;tag_name&#34;:&#39; | head -n 1 | cut -d &#39;&#34;&#39; -f 4)
+</span></span></span><span class="line"><span class="cl"><span class="s">echo &#34;&gt;&gt; Latest available version: $LATEST_TAG&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">TMP_DIR=&#34;$(mktemp -d)&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">trap &#39;rm -rf &#34;$TMP_DIR&#34;&#39; EXIT
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s">curl -sSL -o &#34;$TMP_DIR/mihomo.gz&#34; &#34;https://github.com/MetaCubeX/mihomo/releases/download/${LATEST_TAG}/mihomo-${TARGET_ARCH}-${LATEST_TAG}.gz&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">gzip -dc &#34;$TMP_DIR/mihomo.gz&#34; &gt; &#34;$TMP_DIR/mihomo&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">chmod +x &#34;$TMP_DIR/mihomo&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">
+</span></span></span><span class="line"><span class="cl"><span class="s"># Overwrite binary and seamlessly restart service
+</span></span></span><span class="line"><span class="cl"><span class="s">install -m 755 &#34;$TMP_DIR/mihomo&#34; /usr/local/bin/mihomo
+</span></span></span><span class="line"><span class="cl"><span class="s">systemctl restart mihomo
+</span></span></span><span class="line"><span class="cl"><span class="s">systemctl status mihomo --no-pager
+</span></span></span><span class="line"><span class="cl"><span class="s">echo &#34;&gt;&gt; Successfully upgraded mihomo to $LATEST_TAG&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s">EOF</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">sudo bash upgrade-mihomo.sh
+</span></span><span class="line"><span class="cl">rm -f upgrade-mihomo.sh
+</span></span></code></pre></div><hr>
+<h2 id="conclusion" >
+<div>
+    <a href="#conclusion">
+        #
+    </a>
+    Conclusion
+</div>
+</h2>
+<p>For a personal roaming gateway, reliability and zero-headache operation trump everything else. Arch Linux provides the ideal foundation here: its rolling-release model eliminates the dread of breaking configurations during major distribution upgrades. An occasional two-minute monthly update keeps your entire platform pristine, while the one-click hot-upgrade script handles the daemon smoothly. This deployment gives you a resilient, quiet, and dependable gateway you can rely on long-term.</p>
+
+            </div>
+        </article>
+
+        
+        
+        
+
+        
+
+
+
+
+
+
+
+
+        
+        
+        
+        
+    
+
+        </main>
+        <footer class="common-footer noselect">
+            
+                
+                
+                
+                
+
+
+
+<div class="common-footer-bottom">
+    
+
+    <div class="footer-meta">
+        
+        © mona, 2026
+        
+    </div>
+
+    <div class="footer-licenses">
+        
+        
+        
+
+        
+    </div>
+
+    
+        <div>
+            Powered by <a target="_blank" rel="noopener noreferrer" href="https://gohugo.io/">Hugo</a>, theme <a target="_blank" rel="noopener noreferrer" href="https://github.com/hugo-theme-anubis2/hugo-theme-anubis2">Anubis2</a>, hosted by <a target="_blank" rel="noopener noreferrer" href="https://www.netlify.com/">Netlify</a>.<br>
+        </div>
+    
+</div>
+
+            
+        </footer>
+    </div>
+</body>
+</html>

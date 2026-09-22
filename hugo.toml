@@ -2,6 +2,9 @@ baseURL = "https://record.mona.cx"
 locale = "zh-cn"
 title = "我的记录间"
 theme = "anubis2"
+hasCJKLanguage = true
+summaryLength = 140
+
 
 [pagination]
   pagerSize = 6
@@ -31,7 +34,9 @@ theme = "anubis2"
   unsafe = true
 
 [markup.highlight]
-  style = 'catppuccin-frappe'
+  noClasses = false
+  style = 'github-dark'
+
 
 [params.anubis2]
   enablerssicon = false

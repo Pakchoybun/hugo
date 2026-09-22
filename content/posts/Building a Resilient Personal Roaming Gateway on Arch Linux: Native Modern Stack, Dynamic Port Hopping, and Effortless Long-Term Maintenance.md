@@ -306,7 +306,7 @@ sudo nano /etc/nftables.conf
 
 Paste the following ruleset:
 
-```nftables
+```txt
 #!/usr/sbin/nft -f
 
 flush ruleset

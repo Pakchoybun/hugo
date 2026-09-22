@@ -454,4 +454,31 @@ html[data-theme='light'] .chroma .hl {
   background-color: rgba(0, 0, 0, 0.06) !important;
 }
 
+/* ==========================================================================
+   5. 页脚响应式适配：手机端居中上下两行，电脑端保持原始两端对齐
+   ========================================================================== */
+@media (max-width: 640px) {
+  .common-footer-bottom {
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    gap: 0.45rem !important;
+  }
+
+  .common-footer-bottom .footer-meta {
+    justify-content: center !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  .common-footer-bottom .footer-attribution {
+    text-align: center !important;
+    width: 100% !important;
+    font-size: 0.78rem !important; /* 约 11.5px，在窄屏手机上舒展一行展示 */
+    white-space: normal !important;
+  }
+}
+
+
 

@@ -18,22 +18,6 @@ Arch Linux adopts a rolling-release model, **completely eliminating the headache
 
 ---
 
-## Table of Contents
-1. [Architecture & Traffic Model](#1-architecture--traffic-model)
-2. [Prerequisites & Global Placeholder Reference](#2-prerequisites--global-placeholder-reference)
-3. [Step 0: Initializing a Non-Root Admin User](#step-0-initializing-a-non-root-admin-user)
-4. [Step 1: SSH Hardening (Custom Port & Public Key Authentication)](#step-1-ssh-hardening-custom-port--public-key-authentication)
-5. [Step 2: System Hardening & Environment Initialization (`01-setup-system.sh`)](#step-2-system-hardening--environment-initialization-01-setup-systemsh)
-6. [Step 3: nftables Advanced Firewall Configuration (Port Hopping & Scan Trap)](#step-3-nftables-advanced-firewall-configuration-port-hopping--scan-trap)
-7. [Step 4: Automated Let's Encrypt Certificate Issuance & lighttpd Deployment](#step-4-automated-lets-encrypt-certificate-issuance--lighttpd-deployment)
-8. [Step 5: Installing the mihomo Core Binary (`02-install-mihomo.sh`)](#step-5-installing-the-mihomo-core-binary-02-install-mihomosh)
-9. [Step 6: Generating ECH Keypair & Launching the Server Daemon](#step-6-generating-ech-keypair--launching-the-server-daemon)
-10. [Step 7: Cross-Platform Client Deployment Guide (Desktop & Mobile)](#step-7-cross-platform-client-deployment-guide-desktop--mobile)
-11. [Step 8: Verification & Troubleshooting](#step-8-verification--troubleshooting)
-12. [Step 9: Seamless Hot Upgrades (`upgrade-mihomo.sh`)](#step-9-seamless-hot-upgrades-upgrade-mihomosh)
-
----
-
 ## 1. Architecture & Traffic Model
 
 The guiding principles of this deployment are **minimal attack surface exposure, protocol-conforming traffic simulation, active defensive hardening, and high network resilience**.

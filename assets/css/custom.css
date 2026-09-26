@@ -188,7 +188,8 @@ div.highlight div {
   overflow: visible !important;
 }
 
-/* 代码块核心 pre 区域：设置独立横向滚动与平滑惯性滑动 */
+/* 代码块核心 pre 区域：所有 pre 标签均强制横向滚动与卡片美化，杜绝溢出 */
+pre,
 div.highlight pre,
 pre.chroma {
   display: block !important;
@@ -201,17 +202,27 @@ pre.chroma {
   line-height: 1.72 !important;
   letter-spacing: 0.01em;
   padding: 1.25rem 1.4rem !important;
-  margin: 0 !important;
-  overflow-x: auto !important;
+  margin: 1.6rem 0 !important;
+  overflow-x: auto !important; /* 强制所有 pre 标签横向滚动，彻底覆写 main.css 的 overflow: visible */
   overflow-y: hidden !important;
   -webkit-overflow-scrolling: touch !important; /* iOS 平滑阻尼滑动 */
   color: var(--code-fg) !important;
   background-color: var(--code-bg) !important;
-  border: none !important;
+  border: 1px solid var(--code-border) !important;
+  border-radius: 8px !important;
   white-space: pre !important;
   word-break: normal !important;
   word-wrap: normal !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
   -webkit-font-smoothing: antialiased;
+}
+
+/* 若 pre 位于 div.highlight 内部，消除双重边框与边距 */
+div.highlight pre,
+div.highlight pre.chroma {
+  margin: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 div.highlight code,
@@ -293,6 +304,7 @@ div.highlight pre::-webkit-scrollbar-thumb:hover {
     max-width: 100% !important;
   }
 
+  pre,
   div.highlight pre,
   pre.chroma {
     font-size: 14px !important;

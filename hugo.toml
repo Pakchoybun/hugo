@@ -35,7 +35,9 @@ summaryLength = 140
 
 [markup.highlight]
   noClasses = false
+  guessSyntax = true
   style = 'github-dark'
+
 
 
 [params.anubis2]

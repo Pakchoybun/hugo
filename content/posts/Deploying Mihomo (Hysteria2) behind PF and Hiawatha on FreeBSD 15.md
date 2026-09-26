@@ -203,7 +203,7 @@ This configuration uses FreeBSD 15 PF syntax to redirect UDP traffic on ports `2
 
 Edit `/etc/pf.conf`:
 
-```pf
+```conf
 # /etc/pf.conf
 
 ext_if = [YOUR_IFACE]
@@ -333,7 +333,7 @@ sudo certbot certonly \
 
 Edit `/usr/local/etc/hiawatha/hiawatha.conf`:
 
-```text
+```conf
 ServerId = www
 ConnectionsTotal = 1000
 ConnectionsPerIP = 50

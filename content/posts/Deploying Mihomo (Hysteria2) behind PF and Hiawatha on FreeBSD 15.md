@@ -32,7 +32,7 @@ su - freebsduser
 
 ## 2. Port Map & Topology
 
-```
+```text
 Client (Mihomo)
    │  UDP Port Hopping Range: 20000-21000
    ▼

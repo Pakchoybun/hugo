@@ -1,0 +1,108 @@
+<!-- Basic stuff -->
+<meta charset="utf-8">
+<meta name="HandheldFriendly" content="True">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer-when-downgrade">
+<meta name="theme-name" content="Anubis2">
+<meta name="theme-version" content="1.9.0">
+
+{{ partial "title.html" . }}
+{{ if .Params.private }}
+  <meta name="robots" content="noindex" />
+{{ else }}
+  {{- $desc := "" -}}
+  {{- if .Description -}}
+    {{- $desc = .Description -}}
+  {{- else if .IsPage -}}
+    {{- $desc = replaceRE `<a[^>]*>\s*#*\s*</a>` "" .Summary | replaceRE `</(h[1-6]|p|li|blockquote|div)>` " " | plainify | replaceRE `(^|\s)#+\s*` " " | replaceRE `\s+` " " | strings.TrimSpace | truncate 160 -}}
+  {{- else if site.Params.description -}}
+    {{- $desc = site.Params.description -}}
+  {{- end -}}
+  {{- $authorName := "" -}}
+  {{- with .Params.author -}}
+    {{- if reflect.IsMap . -}}{{- $authorName = .name | default "" -}}{{- else -}}{{- $authorName = . -}}{{- end -}}
+  {{- else -}}
+    {{- with site.Params.author -}}
+      {{- if reflect.IsMap . -}}{{- $authorName = .name | default "" -}}{{- else -}}{{- $authorName = . -}}{{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $copyright := $authorName -}}
+  {{- with site.Params.copyright -}}
+    {{- if reflect.IsMap . -}}{{- $copyright = .name | default $authorName -}}{{- else -}}{{- $copyright = . -}}{{- end -}}
+  {{- end -}}
+  <meta name="description" content="{{ $desc }}">
+  <meta name="author" content="{{ $authorName }}">
+  <meta name="copyright" content="{{ $copyright }}">
+  <meta name="generator" content="Hugo {{ hugo.Version }}">
+  <link rel="canonical" href="{{ .Permalink }}">
+  {{ if .IsTranslated }}
+    {{ range .AllTranslations }}
+      <link rel="alternate" hreflang="{{ .Language.Lang }}" href="{{ .Permalink }}" />
+    {{ end }}
+    {{ range .AllTranslations }}{{ if eq .Language.Lang "en" }}
+      <link rel="alternate" hreflang="x-default" href="{{ .Permalink }}" />
+    {{ end }}{{ end }}
+  {{ end }}
+  {{ with .Keywords }}
+      <meta name="keywords" content="{{ range $i, $e := . }}{{ if $i }},{{ end }}{{ $e }}{{ end }}">
+  {{ end }}
+{{ end }}
+
+{{ with .OutputFormats.Get "rss" -}}
+    {{ printf `<link rel="%s" type="%s" href="%s" title="%s" />` .Rel .MediaType.Type .RelPermalink site.Title | safeHTML }}
+{{ end -}}
+
+{{ partial "head/favicons.html" . }}
+
+{{ partial "head/schema.html" . }}
+
+{{ $params := partial "params-helper.html" . }}
+
+{{ if or (eq $params.enableColorThemeSwitcher true) (eq $params.colorTheme "auto") }}
+<script>
+  (function () {
+    var STORAGE_KEY = 'user-color-scheme';
+    var defaultTheme = "{{ $params.colorTheme }}";
+    var theme;
+    try { theme = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+    if (!theme) {
+      theme = (defaultTheme && defaultTheme !== 'auto')
+        ? defaultTheme
+        : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    }
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+</script>
+{{end}}
+
+{{ partial "resource.html" (dict "context" . "type" "css" "filename" "css/main.css") }}
+{{ partial "resource.html" (dict "context" . "type" "css" "filename" "css/light.css") }}
+{{ partial "resource.html" (dict "context" . "type" "css" "filename" "css/dark.css") }}
+{{ partial "resource.html" (dict "context" . "type" "css" "filename" "css/shortcodes.css") }}
+{{ partial "resource.html" (dict "context" . "type" "css" "filename" "css/ideas.css") }}
+{{ partial "resource.html" (dict "context" . "type" "css" "filename" "css/figures.css") }}
+{{ partial "resource.html" (dict "context" . "type" "css" "filename" "css/footnotes.css") }}
+{{ partial "resource.html" (dict "context" . "type" "css" "filename" "css/links.css") }}
+{{ partial "resource.html" (dict "context" . "type" "css" "filename" "css/typography.css") }}
+
+<link rel="stylesheet" href="/fonts/jinkai/result.css">
+{{ partial "features/custom-css.html" . }}
+{{ partial "features/custom-js.html" . }}
+
+{{ if $params.enableCopyCodeButton }}
+    {{ partial "resource.html" (dict "context" . "type" "js" "filename" "js/copy-code.js") }}
+{{ end }}
+
+{{ range $params.customJS -}}
+  {{ partial "resource.html" (dict "context" $ "type" "js" "filename" . ) }}
+{{- end }}
+
+{{ if hugo.IsProduction }}
+  {{ if isset $params.services "umami" }}
+      {{ partial "analytics/umami_analytics.html" . }}
+  {{ end }}
+
+  {{ if isset $params.services "googleanalytics" }}
+      {{ partial "analytics/google_analytics.html" . }}
+  {{ end }}
+{{ end }}

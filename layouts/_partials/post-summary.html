@@ -33,8 +33,12 @@
         {{ $params := partial "params-helper.html" . }}
         {{ if $params.enableSummary }}
             {{ $raw := .Description | default .Params.summary | default .Summary }}
-            {{ $clean := replaceRE "^[# \t\r\n]+" "" ($raw | plainify) }}
-            {{ $trimmed := trim $clean " \r\n\t" }}
+            {{ $noAnchorHashes := replaceRE `<a[^>]*>\s*#*\s*</a>` "" $raw }}
+            {{ $spacedBlocks := replaceRE `</(h[1-6]|p|li|blockquote|div)>` " " $noAnchorHashes }}
+            {{ $plain := $spacedBlocks | plainify }}
+            {{ $noMdHashes := replaceRE `(^|\s)#+\s*` " " $plain }}
+            {{ $clean := replaceRE `\s+` " " $noMdHashes }}
+            {{ $trimmed := strings.TrimSpace $clean }}
             {{ if ne $trimmed "" }}
                 <div class="content post-summary p-summary">
                     <p>{{ truncate 150 $trimmed }}</p>
@@ -56,6 +60,6 @@
             {{ partial "features/mathjax.html" . }}
         {{ end }}
 
-            {{ partial "post-info.html" . }}
+        {{ partial "post-info.html" . }}
     </article>
 {{ end }}

@@ -538,6 +538,14 @@ div.highlight pre::-webkit-scrollbar-thumb:hover {
 /* ==========================================================================
    移动端针对性适配 (Mobile Responsiveness & Overflow Protection)
    ========================================================================== */
+@media (max-width: 840px) {
+  /* 覆盖主题 typography.css 在 <=840px 强制左对齐的默认样式，保持导航项居中 */
+  .common-header nav:not(:empty) {
+    justify-content: center !important;
+    gap: 0 clamp(0.75rem, 5vw, 2rem) !important;
+  }
+}
+
 @media (max-width: 768px) {
   .container {
     width: 100% !important;

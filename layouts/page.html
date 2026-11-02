@@ -34,9 +34,12 @@
                 </div>
                 {{ partial "post-info.html" . }}
             </div>
-            {{ partial "toc.html" .}}
-            <div class="content e-content">
-                {{ .Content }}
+            {{ partial "toc.html" (dict "page" . "mode" "mobile") }}
+            <div class="post-body-wrap">
+                <div class="content e-content">
+                    {{ .Content }}
+                </div>
+                {{ partial "toc.html" (dict "page" . "mode" "sidebar") }}
             </div>
         </article>
 

@@ -1,0 +1,112 @@
+{{- $page := . -}}
+{{- $mode := "mobile" -}}
+{{- if reflect.IsMap . -}}
+  {{- $page = .page -}}
+  {{- $mode = .mode | default "mobile" -}}
+{{- end -}}
+
+{{- $params := partial "params-helper.html" $page -}}
+{{- $toc := and (gt $params.tocWordCount 0) (ge $page.WordCount $params.tocWordCount) -}}
+{{- if isset $page.Params "toc" -}}
+  {{- $toc = $page.Params.toc -}}
+{{- end -}}
+
+{{- if $toc -}}
+  {{- $tocContent := $page.TableOfContents -}}
+  {{- if findRE "<li>" $tocContent -}}
+    {{- if eq $mode "sidebar" -}}
+      {{- $sidebarToc := replace $tocContent `id="TableOfContents"` `id="TableOfContentsSidebar"` | safeHTML -}}
+      <aside class="toc-sidebar noselect" aria-label="目录">
+        <div class="toc-sidebar-inner">
+          <div class="toc-sidebar-title">目录</div>
+          <div class="toc-sidebar-nav">{{ $sidebarToc }}</div>
+        </div>
+      </aside>
+      <script>
+      (function () {
+        var nav = document.getElementById('TableOfContentsSidebar');
+        var scrollBox = nav && nav.closest('.toc-sidebar-inner');
+        if (!nav || !scrollBox) return;
+
+        var links = Array.prototype.slice.call(nav.querySelectorAll('a[href^="#"]'));
+        if (!links.length) return;
+
+        var items = links.map(function (link) {
+          var raw = link.getAttribute('href').slice(1);
+          var id = raw;
+          try { id = decodeURIComponent(raw); } catch (e) {}
+          var target = document.getElementById(id) || document.getElementById(raw);
+          return target ? { link: link, target: target } : null;
+        }).filter(Boolean);
+
+        if (!items.length) return;
+
+        var activeLink = null;
+        var ticking = false;
+
+        function updateActive() {
+          ticking = false;
+          if (window.innerWidth < 1240) return;
+
+          var offset = 110;
+          var current = items[0];
+
+          for (var i = 0; i < items.length; i++) {
+            if (items[i].target.getBoundingClientRect().top <= offset) {
+              current = items[i];
+            } else {
+              break;
+            }
+          }
+
+          var nearBottom = (window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 24);
+          if (nearBottom) {
+            current = items[items.length - 1];
+          }
+
+          if (current && current.link !== activeLink) {
+            if (activeLink) activeLink.classList.remove('is-active');
+            activeLink = current.link;
+            activeLink.classList.add('is-active');
+
+            if (scrollBox.scrollHeight > scrollBox.clientHeight) {
+              var linkRect = activeLink.getBoundingClientRect();
+              var boxRect = scrollBox.getBoundingClientRect();
+              var relTop = linkRect.top - boxRect.top;
+              var relBottom = linkRect.bottom - boxRect.top;
+              if (relTop < 32) {
+                scrollBox.scrollTo({ top: Math.max(0, scrollBox.scrollTop + relTop - 48), behavior: 'smooth' });
+              } else if (relBottom > scrollBox.clientHeight - 32) {
+                scrollBox.scrollTo({ top: scrollBox.scrollTop + relBottom - scrollBox.clientHeight + 48, behavior: 'smooth' });
+              }
+            }
+          }
+        }
+
+        function onScroll() {
+          if (!ticking) {
+            ticking = true;
+            window.requestAnimationFrame(updateActive);
+          }
+        }
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll, { passive: true });
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', updateActive);
+        } else {
+          updateActive();
+        }
+      })();
+      </script>
+    {{- else -}}
+      <details class="toc toc-mobile noselect">
+        <summary class="toc-summary">
+          <span class="toc-summary-label">目录</span>
+          <span class="toc-chevron" aria-hidden="true"></span>
+        </summary>
+        <div class="inner">{{ $tocContent }}</div>
+      </details>
+    {{- end -}}
+  {{- end -}}
+{{- end -}}

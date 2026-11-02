@@ -336,6 +336,206 @@ div.highlight pre::-webkit-scrollbar-thumb:hover {
 }
 
 /* ==========================================================================
+   3.5 文章目录（TOC）：宽屏右侧静默悬浮跟随 + 窄屏顶部精致折叠卡片
+   ========================================================================== */
+.post-body-wrap {
+  position: relative;
+  width: 100%;
+}
+
+/* 目录内行内代码精简化，避免撑高目录项 */
+.toc code,
+.toc-sidebar code {
+  font-size: 0.86em !important;
+  padding: 0.04em 0.28em !important;
+  margin: 0 0.1em !important;
+}
+
+/* 窄屏/平板默认展示顶部可折叠目录卡片 */
+.toc-sidebar {
+  display: none;
+}
+
+.toc.toc-mobile {
+  cursor: default !important;
+  margin: 1.25rem 0 1.5rem !important;
+  padding: 0 !important;
+  border: 1px solid var(--card-border-color) !important;
+  border-radius: 8px !important;
+  background: var(--card-color) !important;
+  font-size: 0.92rem !important;
+  font-weight: normal !important;
+}
+
+.toc.toc-mobile summary.toc-summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--title-color);
+  outline: none;
+}
+
+.toc.toc-mobile summary.toc-summary::-webkit-details-marker {
+  display: none;
+}
+
+.toc.toc-mobile .toc-chevron {
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 1.8px solid var(--post-info-color);
+  border-bottom: 1.8px solid var(--post-info-color);
+  transform: rotate(-45deg);
+  transition: transform 0.2s ease;
+  margin-right: 0.15rem;
+}
+
+.toc.toc-mobile[open] .toc-chevron {
+  transform: rotate(45deg);
+}
+
+.toc.toc-mobile .inner {
+  margin: 0 !important;
+  padding: 0.55rem 1rem 0.85rem !important;
+  border-top: 1px solid var(--card-border-color);
+  font-size: 0.9rem;
+  line-height: 1.65;
+  font-weight: normal;
+}
+
+.toc.toc-mobile ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.toc.toc-mobile ul ul {
+  padding-left: 0.95rem;
+  margin: 0.12rem 0 0.2rem 0.2rem;
+  border-left: 1px solid var(--card-border-color);
+}
+
+.toc.toc-mobile li {
+  margin: 0.18rem 0;
+}
+
+.toc.toc-mobile a {
+  display: inline-block;
+  padding: 0.12rem 0;
+  color: var(--font-color);
+  border-bottom: none;
+}
+
+.toc.toc-mobile a:hover,
+.toc.toc-mobile a:focus {
+  color: var(--link-color);
+  border-bottom: none;
+}
+
+/* 桌面宽屏（>= 1240px）：隐藏顶部折叠框，切换为右侧静默悬浮目录（正文保持严格居中） */
+@media (min-width: 1240px) {
+  .toc.toc-mobile {
+    display: none !important;
+  }
+
+  .toc-sidebar {
+    display: block;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(100% + 2.5rem);
+    width: clamp(190px, calc(50vw - 415px), 245px);
+  }
+
+  .toc-sidebar-inner {
+    position: sticky;
+    top: 2.5rem;
+    max-height: calc(100vh - 5rem);
+    overflow-y: auto;
+    padding-right: 0.4rem;
+    scrollbar-width: thin;
+  }
+
+  .toc-sidebar-inner::-webkit-scrollbar {
+    width: 4px;
+  }
+  .toc-sidebar-inner::-webkit-scrollbar-thumb {
+    background: var(--card-border-color);
+    border-radius: 4px;
+  }
+
+  .toc-sidebar-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--title-color);
+    letter-spacing: 0.05em;
+    margin-bottom: 0.6rem;
+    padding-left: 0.75rem;
+  }
+
+  #TableOfContentsSidebar ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  #TableOfContentsSidebar > ul {
+    border-left: 1.5px solid var(--card-border-color);
+  }
+
+  #TableOfContentsSidebar li {
+    margin: 0;
+  }
+
+  #TableOfContentsSidebar a {
+    display: block;
+    margin-left: -1.5px;
+    padding: 0.28rem 0.35rem 0.28rem 0.75rem;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    color: var(--post-info-color);
+    border-left: 2px solid transparent;
+    border-bottom: none !important;
+    opacity: 0.78;
+    transition: color 0.18s ease, border-left-color 0.18s ease, opacity 0.18s ease;
+    overflow-wrap: anywhere;
+  }
+
+  /* 二、三级子标题内缩但左侧激活指示条统一对齐在主导轨上 */
+  #TableOfContentsSidebar > ul > li > ul > li > a {
+    padding-left: 1.5rem;
+    font-size: 0.8rem;
+  }
+
+  #TableOfContentsSidebar > ul > li > ul > li > ul > li > a {
+    padding-left: 2.15rem;
+    font-size: 0.78rem;
+  }
+
+  .toc-sidebar:hover #TableOfContentsSidebar a {
+    opacity: 0.92;
+  }
+
+  #TableOfContentsSidebar a:hover,
+  #TableOfContentsSidebar a:focus {
+    color: var(--title-color);
+    opacity: 1;
+    border-bottom: none !important;
+  }
+
+  #TableOfContentsSidebar a.is-active {
+    color: var(--link-color) !important;
+    border-left-color: var(--link-color) !important;
+    font-weight: 600;
+    opacity: 1 !important;
+  }
+}
+
+/* ==========================================================================
    移动端针对性适配 (Mobile Responsiveness & Overflow Protection)
    ========================================================================== */
 @media (max-width: 768px) {

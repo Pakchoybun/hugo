@@ -34,6 +34,12 @@ summaryLength = 140
 [markup.goldmark.renderer]
   unsafe = true
 
+[markup.goldmark.extensions.passthrough]
+  enable = true
+  [markup.goldmark.extensions.passthrough.delimiters]
+    block = [['\[', '\]'], ['$$', '$$']]
+    inline = [['\(', '\)'], ['$', '$']]
+
 [markup.highlight]
   noClasses = false
   guessSyntax = true
@@ -44,4 +50,4 @@ summaryLength = 140
 [params.anubis2]
   enablerssicon = false
   customcss = ["css/custom.css"]
-  enablemathglobally = true
+  enablemathglobally = false

@@ -1,5 +1,5 @@
 ---
-title: Deploying Mihomo (Hysteria2) Behind PF and Hiawatha on FreeBSD 15
+title: FreeBSD安装mihomo记录
 date: 2026-09-26T13:05:02+08:00
 draft: false
 tags:

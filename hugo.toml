@@ -43,3 +43,4 @@ summaryLength = 140
 [params.anubis2]
   enablerssicon = false
   customcss = ["css/custom.css"]
+  enablemathglobally = true
